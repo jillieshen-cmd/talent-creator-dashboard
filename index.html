@@ -25,12 +25,12 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
 .refresh-btn { background: transparent; border: 1px solid var(--border2); color: var(--text2); font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
 .refresh-btn:hover { border-color: var(--accent); color: var(--accent2); }
 .main { max-width: 1200px; margin: 0 auto; padding: 24px 24px 48px; }
-.section-title { font-size: 11px; font-family: var(--mono); letter-spacing: 0.12em; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.section-title { font-size: 16px; font-family: var(--mono); letter-spacing: 0.08em; color: #ffffff; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
 .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 24px; }
 .metric { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
-.metric-label { font-size: 11px; color: var(--text3); font-family: var(--mono); letter-spacing: 0.06em; margin-bottom: 6px; }
+.metric-label { font-size: 14px; color: #ffffff; font-family: var(--mono); letter-spacing: 0.04em; margin-bottom: 6px; }
 .metric-value { font-size: 26px; font-weight: 700; font-family: var(--mono); line-height: 1; }
 .metric-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
 .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-family: var(--mono); font-size: 11px; font-weight: 500; }
@@ -97,11 +97,11 @@ select:focus { border-color: var(--accent); }
   </div>
   <div class="two-col">
     <div class="card">
-      <div style="font-size:11px;font-family:var(--mono);color:var(--text3);letter-spacing:0.06em;margin-bottom:12px">等級分布</div>
+      <div style="font-size:14px;font-family:var(--mono);color:#ffffff;letter-spacing:0.04em;margin-bottom:12px">等級分布</div>
       <div class="chart-wrap"><canvas id="lvChart" role="img" aria-label="近30天主播等級分布圓餅圖"></canvas></div>
     </div>
     <div class="card">
-      <div style="font-size:11px;font-family:var(--mono);color:var(--text3);letter-spacing:0.06em;margin-bottom:12px">每日開播人數</div>
+      <div style="font-size:14px;font-family:var(--mono);color:#ffffff;letter-spacing:0.04em;margin-bottom:12px">每日開播人數</div>
       <div class="chart-wrap"><canvas id="dailyChart" role="img" aria-label="每日開播主播人數折線圖"></canvas></div>
     </div>
   </div>
@@ -130,9 +130,7 @@ select:focus { border-color: var(--accent); }
 </div>
 
 <script>
-// ── 唯一需要修改的設定 ────────────────────────────
 const WEBHOOK_URL = 'https://swagops.app.n8n.cloud/webhook/talent-creator-dashboard';
-// ─────────────────────────────────────────────────
 
 let data = null;
 let lvChart, dailyChart;
@@ -149,7 +147,6 @@ function scoreBarColor(s) {
   return '#55556a';
 }
 
-// 日期格式工具
 function fmtInputDate(d) {
   const y = d.getFullYear();
   const m = String(d.getMonth()+1).padStart(2,'0');
@@ -187,7 +184,6 @@ function renderAll() {
   renderWarnTable();
 }
 
-// ── 昨日表現 ──────────────────────────────────────
 function renderYesterday() {
   const s = data.yesterday_summary;
   const t = data.yesterday_table;
@@ -235,7 +231,6 @@ function renderYesterday() {
   `;
 }
 
-// ── 近30天表現 ────────────────────────────────────
 function renderMonthly() {
   const m = data.monthly_summary;
   if (!m) return;
@@ -287,7 +282,6 @@ function renderDailyChart(series) {
   });
 }
 
-// ── 主播下拉選單 ──────────────────────────────────
 function buildUserSelect() {
   const sel = document.getElementById('userSelect');
   sel.innerHTML = '<option value="">— 請選擇 —</option>';
@@ -298,14 +292,12 @@ function buildUserSelect() {
     sel.appendChild(opt);
   });
 
-  // 預設填入近30天日期
   const toDate   = new Date();
   const fromDate = new Date(); fromDate.setDate(toDate.getDate() - 29);
   document.getElementById('userFrom').value = fmtInputDate(fromDate);
   document.getElementById('userTo').value   = fmtInputDate(toDate);
 }
 
-// ── 主播個人查詢 ──────────────────────────────────
 async function renderUserDetail() {
   const uid  = document.getElementById('userSelect').value;
   const from = document.getElementById('userFrom').value.replace(/-/g, '');
@@ -327,7 +319,6 @@ async function renderUserDetail() {
 
     if (!u) { el.innerHTML = '<div class="no-data">此區間尚無資料</div>'; return; }
 
-    // 區間顯示標籤
     const fmtLabel = s => s ? `${s.slice(0,4)}/${s.slice(4,6)}/${s.slice(6,8)}` : '—';
     const rangeLabel = (from || to) ? `${fmtLabel(from)} ～ ${fmtLabel(to)}` : '近30天';
 
@@ -385,7 +376,6 @@ function clearUserDateFilter() {
   renderUserDetail();
 }
 
-// ── 需要關心的主播 ────────────────────────────────
 function renderWarnTable() {
   const el   = document.getElementById('warn-table');
   const list = data.warn_list || [];
