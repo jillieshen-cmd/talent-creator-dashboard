@@ -196,7 +196,7 @@ function renderYesterday() {
 
   document.getElementById('yesterday-metrics').innerHTML = `
     <div class="metric"><div class="metric-label">開播人數</div><div class="metric-value" style="color:var(--blue)">${s.active_count}</div><div class="metric-sub">昨日</div></div>
-    <div class="metric"><div class="metric-label">平均分數</div><div class="metric-value" style="color:var(--accent2)">${s.avg_score}</div><div class="metric-sub">kpi_score</div></div>
+    <div class="metric"><div class="metric-label">平均分數</div><div class="metric-value" style="color:var(--accent2)">${s.avg_score}</div><div class="metric-sub">score_ttl</div></div>
     <div class="metric"><div class="metric-label">最高分</div><div class="metric-value" style="color:var(--green)">${s.top_user?.score||'-'}</div><div class="metric-sub">${s.top_user?.name||''}</div></div>
     <div class="metric"><div class="metric-label">總獲鑽量</div><div class="metric-value" style="color:var(--amber)">${(s.total_diamond||0).toLocaleString()}</div><div class="metric-sub">kpi_5</div></div>
   `;
