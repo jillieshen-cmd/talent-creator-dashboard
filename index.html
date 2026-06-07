@@ -83,7 +83,7 @@ select:focus { border-color: var(--accent); }
 
 <div class="main">
 
-  <div class="section-title">昨日表現</div>
+  <div class="section-title" id="yesterday-title">昨日表現</div>
   <div id="yesterday-metrics" class="metric-grid">
     <div class="loading"><div class="spinner"></div>載入資料…</div>
   </div>
@@ -188,6 +188,14 @@ function renderYesterday() {
   const s = data.yesterday_summary;
   const t = data.yesterday_table;
 
+  // 動態更新標題，加上昨天日期
+  if (s?.date) {
+    const d = String(s.date); // YYYYMMDD
+    const mm = parseInt(d.slice(4, 6));
+    const dd = parseInt(d.slice(6, 8));
+    document.getElementById('yesterday-title').textContent = `昨日表現（${mm}/${dd}）`;
+  }
+
   if (!s || s.active_count === 0) {
     document.getElementById('yesterday-metrics').innerHTML = `<div class="metric"><div class="metric-label">昨日（${s?.date||''}）</div><div class="metric-value" style="color:var(--text3)">0</div><div class="metric-sub">無開播資料</div></div>`;
     document.getElementById('yesterday-table').innerHTML = '<div class="no-data">昨日尚無資料</div>';
@@ -196,7 +204,7 @@ function renderYesterday() {
 
   document.getElementById('yesterday-metrics').innerHTML = `
     <div class="metric"><div class="metric-label">開播人數</div><div class="metric-value" style="color:var(--blue)">${s.active_count}</div><div class="metric-sub">昨日</div></div>
-    <div class="metric"><div class="metric-label">平均分數</div><div class="metric-value" style="color:var(--accent2)">${s.avg_score}</div><div class="metric-sub">score_ttl</div></div>
+    <div class="metric"><div class="metric-label">平均分數</div><div class="metric-value" style="color:var(--accent2)">${s.avg_score}</div><div class="metric-sub">kpi_score</div></div>
     <div class="metric"><div class="metric-label">最高分</div><div class="metric-value" style="color:var(--green)">${s.top_user?.score||'-'}</div><div class="metric-sub">${s.top_user?.name||''}</div></div>
     <div class="metric"><div class="metric-label">總獲鑽量</div><div class="metric-value" style="color:var(--amber)">${(s.total_diamond||0).toLocaleString()}</div><div class="metric-sub">kpi_5</div></div>
   `;
