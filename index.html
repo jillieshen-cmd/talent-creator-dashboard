@@ -83,12 +83,14 @@ select:focus { border-color: var(--accent); }
 
 <div class="main">
 
-  <div class="section-title" id="yesterday-title">昨日表現</div>
-  <div id="yesterday-metrics" class="metric-grid">
-    <div class="loading"><div class="spinner"></div>載入資料…</div>
-  </div>
-  <div class="card" style="margin-bottom:24px">
-    <div id="yesterday-table"><div class="loading"><div class="spinner"></div></div></div>
+  <div id="yesterday-section">
+    <div class="section-title" id="yesterday-title">昨日表現</div>
+    <div id="yesterday-metrics" class="metric-grid">
+      <div class="loading"><div class="spinner"></div>載入資料…</div>
+    </div>
+    <div class="card" style="margin-bottom:24px">
+      <div id="yesterday-table"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
   </div>
 
   <div class="section-title">近30天整體表現</div>
@@ -188,9 +190,8 @@ function renderYesterday() {
   const s = data.yesterday_summary;
   const t = data.yesterday_table;
 
-  // 動態更新標題，加上昨天日期
   if (s?.date) {
-    const d = String(s.date); // YYYYMMDD
+    const d = String(s.date);
     const mm = parseInt(d.slice(4, 6));
     const dd = parseInt(d.slice(6, 8));
     document.getElementById('yesterday-title').textContent = `昨日表現（${mm}/${dd}）`;
