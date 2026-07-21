@@ -37,10 +37,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
 .metric-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
 .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-family: var(--mono); font-size: 11px; font-weight: 500; }
 .badge-S\+,.badge-S { background: rgba(245,180,11,0.15); color: var(--amber); }
-.badge-A { background: rgba(62,207,142,0.12); color: var(--green); }
-.badge-B { background: rgba(96,196,232,0.12); color: var(--blue); }
-.badge-C { background: rgba(0,210,190,0.12); color: var(--accent2); }
-.badge-D { background: rgba(154,154,148,0.1); color: var(--text2); }
+.badge-A\+,.badge-A { background: rgba(62,207,142,0.12); color: var(--green); }
+.badge-B\+,.badge-B { background: rgba(96,196,232,0.12); color: var(--blue); }
+.badge-C\+,.badge-C { background: rgba(0,210,190,0.12); color: var(--accent2); }
+.badge-D\+,.badge-D { background: rgba(154,154,148,0.1); color: var(--text2); }
 .badge-warn { background: rgba(248,113,113,0.12); color: var(--red); }
 .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -145,14 +145,21 @@ let data = null;
 let lvChart, dailyChart;
 
 function lvColor(lv) {
-  return {'S+':'#f5b40b','S':'#fbbf24','A':'#3ecf8e','B':'#60C4E8','C':'#00D2BE','D':'#646464'}[lv] || '#646464';
+  // 新制 10 級（2026-07-21）：S+/S 琥珀、A+/A 綠、B+/B 藍、C+/C teal、D+/D 灰
+  return {
+    'S+':'#f5b40b','S':'#fbbf24',
+    'A+':'#3ecf8e','A':'#5ddba3',
+    'B+':'#60C4E8','B':'#8ad4ee',
+    'C+':'#00D2BE','C':'#4de3d4',
+    'D+':'#8a8a84','D':'#646464'
+  }[lv] || '#646464';
 }
 
 function scoreBarColor(s) {
   const n = parseFloat(s)||0;
-  if (n >= 85) return '#f5b40b';
-  if (n >= 65) return '#3ecf8e';
-  if (n >= 55) return '#60C4E8';
+  if (n >= 90) return '#f5b40b';
+  if (n >= 75) return '#3ecf8e';
+  if (n >= 60) return '#60C4E8';
   return '#646464';
 }
 
@@ -255,13 +262,13 @@ function renderMonthly() {
   const m = data.monthly_summary;
   if (!m) return;
 
-  const highPerf = (m.lv_counts['S+']||0)+(m.lv_counts['S']||0)+(m.lv_counts['A']||0);
+  const highPerf = (m.lv_counts['S+']||0)+(m.lv_counts['S']||0)+(m.lv_counts['A+']||0)+(m.lv_counts['A']||0);
   document.getElementById('monthly-metrics').innerHTML = `
     <div class="metric"><div class="metric-label">活躍主播</div><div class="metric-value" style="color:var(--blue)">${m.active_count}</div><div class="metric-sub">近30天有開播</div></div>
     <div class="metric"><div class="metric-label">總開播場次</div><div class="metric-value" style="color:var(--accent2)">${m.total_sessions}</div><div class="metric-sub">累計</div></div>
     <div class="metric"><div class="metric-label">平均分數</div><div class="metric-value" style="color:var(--green)">${m.avg_score}</div><div class="metric-sub">score_ttl</div></div>
     <div class="metric"><div class="metric-label">總獲鑽量</div><div class="metric-value" style="color:var(--amber)">${(m.total_diamond/10000).toFixed(1)}萬</div><div class="metric-sub">kpi_5</div></div>
-    <div class="metric"><div class="metric-label">S/S+/A 主播</div><div class="metric-value" style="color:var(--amber)">${highPerf}</div><div class="metric-sub">高績效人數</div></div>
+    <div class="metric"><div class="metric-label">A 以上主播</div><div class="metric-value" style="color:var(--amber)">${highPerf}</div><div class="metric-sub">高績效人數</div></div>
   `;
 
   renderLvChart(m.lv_counts);
@@ -269,7 +276,7 @@ function renderMonthly() {
 }
 
 function renderLvChart(lvCounts) {
-  const lvOrder = ['S+','S','A','B','C','D'];
+  const lvOrder = ['S+','S','A+','A','B+','B','C+','C','D+','D'];
   const labels  = lvOrder.filter(l=>lvCounts[l]);
   const vals    = labels.map(l=>lvCounts[l]);
   const colors  = labels.map(l=>lvColor(l));
