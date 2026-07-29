@@ -409,7 +409,10 @@ function renderLvChart(lvCounts) {
         /* 橫軸刻度與格線全部隱藏：人數已直接標在長條末端，不需要再對照軸線 */
         x: { display: false, beginAtZero: true },
         y: { grid: { display: false }, border: { display: false },
-             ticks: { color: 'rgba(255,255,255,0.6)', font: { family: 'ui-monospace, Menlo, monospace', size: 12 } } }
+             /* crossAlign:'far' ＝ 標籤靠最左緣對齊；預設 'near' 會貼著軸線變成右對齊，
+                導致 S+ 與 S、A+ 與 A 的字首參差不齊 */
+             ticks: { color: 'rgba(255,255,255,0.6)', crossAlign: 'far',
+                      font: { family: 'ui-monospace, Menlo, monospace', size: 12 } } }
       }
     },
     plugins: [{
