@@ -72,7 +72,6 @@ body { background: var(--surface); color: var(--text); font-family: var(--sans);
 .badge-B\+, .badge-B { background: rgba(96,196,232,0.14); color: var(--info); }
 .badge-C\+, .badge-C { background: rgba(77,227,212,0.12); color: var(--primary-soft); }
 .badge-D\+, .badge-D { background: rgba(255,255,255,0.07); color: var(--text2); }
-.badge-warn { background: rgba(207,4,4,0.16); color: #FF6B6B; }
 
 .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -83,8 +82,11 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 td.em { color: var(--text); }
 td.mono { font-family: var(--mono); font-size: 12px; }
 td.score { font-family: var(--mono); font-size: 15px; color: var(--white); }
+th.sortable { cursor: pointer; user-select: none; }
+th.sortable:hover { color: var(--text2); }
+th.sortable.active { color: var(--primary); }
+th .arrow { opacity: 0.5; margin-left: 3px; }
 tr.top1 td { background: rgba(0,210,190,0.06); }
-.warn-row td { background: rgba(207,4,4,0.05); }
 
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
 @media (max-width: 820px) { .two-col { grid-template-columns: 1fr; } }
@@ -98,9 +100,19 @@ select:focus { border-color: var(--primary); }
 .select-label { font-size: 12px; color: var(--text-tertiary); white-space: nowrap; }
 
 .avatar { width: 44px; height: 44px; border-radius: 1000px; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: var(--surface); flex-shrink: 0; }
-.user-profile-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
 
-.cmp-row { display: grid; grid-template-columns: 96px 1fr 156px; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+/* 個人查詢頁：左側主播資訊＋KPI，右側趨勢圖 */
+.user-grid { display: grid; grid-template-columns: 268px 1fr; gap: 16px; margin-bottom: 16px; align-items: start; }
+@media (max-width: 900px) { .user-grid { grid-template-columns: 1fr; } }
+.user-left { display: flex; flex-direction: column; gap: 8px; }
+.user-card { background: var(--container); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+.user-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.user-metrics .metric:first-child { grid-column: 1 / -1; }
+
+/* 與全體平均對比：兩欄，長條縮短 */
+.cmp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+@media (max-width: 720px) { .cmp-grid { grid-template-columns: 1fr; } }
+.cmp-row { display: grid; grid-template-columns: 68px 1fr 118px; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
 .cmp-row:last-child { border-bottom: none; }
 .cmp-name { font-size: 12px; color: var(--text2); }
 .cmp-bars { display: flex; flex-direction: column; gap: 4px; }
@@ -188,11 +200,6 @@ select:focus { border-color: var(--primary); }
       <div id="user-detail"><div class="no-data">請選擇主播查看各項指標</div></div>
     </div>
 
-    <div class="section-title">需要關心的主播</div>
-    <div class="card">
-      <div id="warn-table"><div class="loading"><div class="spinner"></div></div></div>
-    </div>
-
   </div>
 
 </div>
@@ -258,7 +265,6 @@ async function loadData() {
   document.getElementById('yesterday-metrics').innerHTML = '<div class="loading"><div class="spinner"></div>載入資料…</div>';
   document.getElementById('monthly-metrics').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   document.getElementById('yesterday-table').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-  document.getElementById('warn-table').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
 
   try {
     const res = await fetch(WEBHOOK_URL);
@@ -269,13 +275,11 @@ async function loadData() {
     renderYesterday();
     renderMonthly();
     buildUserSelect();
-    renderWarnTable();
   } catch(e) {
     const msg = `<div class="error-msg">⚠ 無法載入資料：${e.message}</div>`;
     document.getElementById('yesterday-metrics').innerHTML = msg;
     document.getElementById('monthly-metrics').innerHTML = '';
     document.getElementById('yesterday-table').innerHTML = '';
-    document.getElementById('warn-table').innerHTML = '';
   }
 }
 
@@ -485,7 +489,7 @@ const CMP_FIELDS = [
   { key:'kpi_6_hour', name:'開播時數', fmt:v => v.toFixed(2)+'h' }
 ];
 
-/* ④ 與全體平均對比：上排＝這位主播，下排＝全體平均 */
+/* ④ 與全體平均對比：上排＝這位主播，下排＝全體平均。拆兩欄、長條縮短 */
 function renderCompare(daily) {
   const all = data.kpi_avg_all;
   if (!all) return '';
@@ -516,9 +520,70 @@ function renderCompare(daily) {
         <span class="cmp-key"><span class="cmp-swatch" style="background:var(--primary)"></span>這位主播</span>
         <span class="cmp-key"><span class="cmp-swatch" style="background:var(--tertiary)"></span>全體平均（當月 ${all.sessions} 場）</span>
       </div>
-      ${rows}
+      <div class="cmp-grid">${rows}</div>
       <div class="footnote">百分比＝這位主播的區間平均 ÷ 全體平均。全體平均口徑為當月所有有開播場次。</div>
     </div>`;
+}
+
+/* ═════ 明細表格：可點欄位排序 ═════ */
+let userDaily = [];
+let userSort  = { key: 'date', dir: 'desc' };
+
+const DAILY_COLS = [
+  { key:'score_pay',  label:'時薪' },
+  { key:'score_lv',   label:'等級' },
+  { key:'score_ttl',  label:'分數' },
+  { key:'date',       label:'日期' },
+  { key:'kpi_5',      label:'獲鑽' },
+  { key:'kpi_6_hour', label:'開播時長' },
+  { key:'kpi_1',      label:'CCU' },
+  { key:'kpi_2',      label:'聊天' },
+  { key:'kpi_3',      label:'新用戶' },
+  { key:'kpi_4',      label:'人均分鐘' }
+];
+
+function setUserSort(key) {
+  if (userSort.key === key) userSort.dir = userSort.dir === 'asc' ? 'desc' : 'asc';
+  else userSort = { key, dir: 'desc' };
+  document.getElementById('user-daily-table').innerHTML = userDailyTableHTML();
+}
+
+function userDailyTableHTML() {
+  const rank = LV_ORDER.slice().reverse();        // D 最小 → S+ 最大
+  const num  = v => { const n = parseFloat(v); return isNaN(n) ? -Infinity : n; };
+  const val  = r => userSort.key === 'score_lv' ? rank.indexOf(r.score_lv) : num(r[userSort.key]);
+  const sign = userSort.dir === 'asc' ? 1 : -1;
+  const rows = [...userDaily].sort((a,b) => sign * (val(a) - val(b)));
+
+  const th = DAILY_COLS.map(c => {
+    const active = userSort.key === c.key;
+    const arrow  = active ? `<span class="arrow">${userSort.dir === 'asc' ? '▲' : '▼'}</span>` : '';
+    return `<th class="sortable${active ? ' active' : ''}" onclick="setUserSort('${c.key}')">${c.label}${arrow}</th>`;
+  }).join('');
+
+  return `
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr>${th}</tr></thead>
+      <tbody>
+        ${rows.map(r=>`
+          <tr>
+            <td class="mono" style="color:var(--gold)">$${r.score_pay ?? '-'}</td>
+            <td><span class="badge badge-${r.score_lv}">${r.score_lv}</span></td>
+            <td class="score" style="color:${scoreColor(r.score_ttl)}">${r.score_ttl}</td>
+            <td class="mono">${String(r.date).slice(4,6)}/${String(r.date).slice(6,8)}</td>
+            <td class="mono">${r.kpi_5 ? (parseFloat(r.kpi_5)||0).toLocaleString() : '-'}</td>
+            <td class="mono">${r.kpi_6_hour ? parseFloat(r.kpi_6_hour).toFixed(1)+'h' : '-'}</td>
+            <td class="mono">${r.kpi_1 ?? '-'}</td>
+            <td class="mono">${r.kpi_2 ?? '-'}</td>
+            <td class="mono">${r.kpi_3 ?? '-'}</td>
+            <td class="mono">${r.kpi_4 ?? '-'}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    </div>
+    <div class="footnote">點欄位標題可排序（再點一次切換升／降序）</div>`;
 }
 
 /* ② 每日分數趨勢 */
@@ -528,10 +593,13 @@ function renderUserChart(daily) {
   const ctx = el.getContext('2d');
   if (userChart) userChart.destroy();
 
+  /* daily 只含「有開播的日子」，點數通常 8–20 個，所以標籤放密一點：
+     ≤16 點全部標；>16 點每 2 個標一個（由最後一天往回數，最新一天必有標籤） */
   const n = daily.length;
+  const step = n <= 16 ? 1 : 2;
   let prevMonth = null;
   const tickText = daily.map((r, i) => {
-    if (n > 10 && (n - 1 - i) % 7 !== 0) return '';
+    if ((n - 1 - i) % step !== 0) return '';
     const p = ymdToParts(r.date);
     const txt = (prevMonth === null || p.m !== prevMonth) ? `${p.m}/${p.d}` : `${p.d}`;
     prevMonth = p.m;
@@ -610,63 +678,58 @@ async function renderUserDetail() {
     const fmtLabel = s => s ? `${s.slice(0,4)}/${s.slice(4,6)}/${s.slice(6,8)}` : '—';
     const rangeLabel = (from || to) ? `${fmtLabel(from)} ～ ${fmtLabel(to)}` : '近30天';
 
-    /* ① 基本資料 ② 分數趨勢 ③ 每日明細 ④ 與全體平均對比 */
-    el.innerHTML = `
-      <div class="user-profile-header">
-        <div class="avatar">${u.name.slice(0,2)}</div>
-        <div>
-          <div style="font-weight:600;font-size:15px">${u.name}</div>
-          <div style="font-size:11px;color:var(--text-tertiary);font-family:var(--mono);margin-top:3px">${u.company || '（無所屬公司）'}</div>
-        </div>
-        <div style="margin-left:auto;text-align:right">
-          <div class="badge badge-${u.best_lv}" style="font-size:14px;padding:4px 12px">${u.best_lv}</div>
-          <div style="font-size:11px;color:var(--text-tertiary);font-family:var(--mono);margin-top:4px">最佳等級</div>
-        </div>
-      </div>
-      <div style="font-size:11px;color:var(--text-tertiary);font-family:var(--mono);margin-bottom:12px">📅 查詢區間：${rangeLabel}</div>
-      <div class="metric-grid" style="margin-bottom:16px">
-        <div class="metric"><div class="metric-label">開播天數</div><div class="metric-value" style="color:var(--info)">${u.active_days}</div></div>
-        <div class="metric"><div class="metric-label">平均分數</div><div class="metric-value" style="color:var(--primary)">${u.avg_score}</div></div>
-        <div class="metric"><div class="metric-label">最高分</div><div class="metric-value" style="color:var(--gold)">${u.best_score}</div></div>
-        <div class="metric"><div class="metric-label">總獲鑽</div><div class="metric-value" style="color:var(--primary-soft)">${(u.total_diamond||0).toLocaleString()}</div></div>
-      </div>
+    /* 標題用「近30天」，若使用者自己改過日期區間就改顯示實際區間 */
+    const dTo = new Date(), dFrom = new Date(); dFrom.setDate(dTo.getDate() - 29);
+    const isDefault30 = from === fmtInputDate(dFrom).replace(/-/g,'') && to === fmtInputDate(dTo).replace(/-/g,'');
+    const shortRange = `${+from.slice(4,6)}/${+from.slice(6,8)}–${+to.slice(4,6)}/${+to.slice(6,8)}`;
+    const trendTitle  = isDefault30 ? '近30天分數趨勢' : `分數趨勢（${shortRange}）`;
+    const detailTitle = isDefault30 ? '近30天明細'     : `明細（${shortRange}）`;
 
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-title">每日分數趨勢</div>
-        <div class="chart-wrap" style="height:200px"><canvas id="userScoreChart" role="img" aria-label="該主播每日分數折線圖"></canvas></div>
-        <div class="footnote">灰底區塊為週末（六、日）</div>
+    /* 平均開播時數（第 5 張 KPI 卡） */
+    const hrs = u.daily.map(r => parseFloat(r.kpi_6_hour)).filter(v => !isNaN(v));
+    const avgHour = hrs.length ? (hrs.reduce((a,b)=>a+b,0) / hrs.length).toFixed(1) : '-';
+
+    userDaily = u.daily;
+    userSort  = { key: 'date', dir: 'desc' };
+
+    /* ① 左：主播資訊＋5 張 KPI ／ 右：分數趨勢 ② 明細（可排序）③ 與全體平均對比 */
+    el.innerHTML = `
+      <div style="font-size:11px;color:var(--text-tertiary);font-family:var(--mono);margin-bottom:12px">📅 查詢區間：${rangeLabel}</div>
+
+      <div class="user-grid">
+        <div class="user-left">
+          <div class="user-card">
+            <div class="avatar">${u.name.slice(0,2)}</div>
+            <div style="min-width:0">
+              <div style="font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis">${u.name}</div>
+              <div style="font-size:11px;color:var(--text-tertiary);font-family:var(--mono);margin-top:3px">${u.company || '（無所屬公司）'}</div>
+            </div>
+          </div>
+          <div class="user-metrics">
+            <div class="metric"><div class="metric-label">最佳等級</div><div class="metric-value" style="color:${lvColor(u.best_lv)}">${u.best_lv}</div><div class="metric-sub">最高分 ${u.best_score}</div></div>
+            <div class="metric"><div class="metric-label">開播天數</div><div class="metric-value" style="color:var(--info)">${u.active_days}</div></div>
+            <div class="metric"><div class="metric-label">平均分數</div><div class="metric-value" style="color:var(--primary)">${u.avg_score}</div></div>
+            <div class="metric"><div class="metric-label">總獲鑽</div><div class="metric-value" style="color:var(--primary-soft)">${(u.total_diamond||0).toLocaleString()}</div></div>
+            <div class="metric"><div class="metric-label">平均時數</div><div class="metric-value" style="color:var(--gold)">${avgHour}<span style="font-size:14px">h</span></div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">${trendTitle}</div>
+          <div class="chart-wrap" style="height:296px"><canvas id="userScoreChart" role="img" aria-label="該主播分數趨勢折線圖"></canvas></div>
+          <div class="footnote">橫軸只包含有開播的日子；灰底代表該場為週末（六、日）</div>
+        </div>
       </div>
 
       <div class="card">
-        <div class="card-title">每日明細</div>
-        <div class="tbl-wrap">
-        <table>
-          <thead><tr>
-            <th>等級</th><th>分數</th><th>日期</th><th>獲鑽</th><th>開播時長</th><th>CCU</th><th>聊天</th><th>新用戶</th><th>人均分鐘</th><th>時薪</th>
-          </tr></thead>
-          <tbody>
-            ${[...u.daily].reverse().map(r=>`
-              <tr>
-                <td><span class="badge badge-${r.score_lv}">${r.score_lv}</span></td>
-                <td class="score" style="color:${scoreColor(r.score_ttl)}">${r.score_ttl}</td>
-                <td class="mono">${String(r.date).slice(4,6)}/${String(r.date).slice(6,8)}</td>
-                <td class="mono">${r.kpi_5 ? (parseFloat(r.kpi_5)||0).toLocaleString() : '-'}</td>
-                <td class="mono">${r.kpi_6_hour ? parseFloat(r.kpi_6_hour).toFixed(1)+'h' : '-'}</td>
-                <td class="mono">${r.kpi_1 ?? '-'}</td>
-                <td class="mono">${r.kpi_2 ?? '-'}</td>
-                <td class="mono">${r.kpi_3 ?? '-'}</td>
-                <td class="mono">${r.kpi_4 ?? '-'}</td>
-                <td class="mono" style="color:var(--gold)">$${r.score_pay ?? '-'}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        </div>
+        <div class="card-title">${detailTitle}</div>
+        <div id="user-daily-table"></div>
       </div>
 
       ${renderCompare(u.daily)}
     `;
 
+    document.getElementById('user-daily-table').innerHTML = userDailyTableHTML();
     renderUserChart(u.daily);
   } catch(e) {
     el.innerHTML = `<div class="error-msg">⚠ 查詢失敗：${e.message}</div>`;
@@ -679,37 +742,6 @@ function clearUserDateFilter() {
   document.getElementById('userFrom').value = fmtInputDate(from);
   document.getElementById('userTo').value   = fmtInputDate(to);
   renderUserDetail();
-}
-
-/* ══════════ 需要關心的主播 ══════════ */
-function renderWarnTable() {
-  const el = document.getElementById('warn-table');
-  const list = data.warn_list || [];
-  if (!list.length) {
-    el.innerHTML = '<div class="no-data" style="color:var(--primary)">✓ 近30天無需特別關注的主播</div>';
-    return;
-  }
-  el.innerHTML = `
-    <div class="tbl-wrap">
-    <table>
-      <thead><tr><th>最新等級</th><th>平均分數</th><th>主播</th><th>所屬公司</th><th>開播天數</th><th>出勤率</th><th>異常原因</th></tr></thead>
-      <tbody>
-        ${list.map(u=>`
-          <tr class="warn-row">
-            <td><span class="badge badge-${u.last_lv}">${u.last_lv}</span></td>
-            <td class="score" style="color:${scoreColor(u.avg_score)}">${u.avg_score}</td>
-            <td class="em">${u.name}</td>
-            <td>${u.company ? `<span class="tag-company">${u.company}</span>` : '-'}</td>
-            <td class="mono">${u.days} 天</td>
-            <td class="mono" style="color:${u.d_ratio<30 ? '#FF6B6B' : 'var(--gold)'}">${u.d_ratio}%</td>
-            <td>${u.reasons.map(r=>`<span class="badge badge-warn" style="margin-right:4px">${r}</span>`).join('')}</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-    </div>
-    <div class="footnote">⚠ 異常判定：出勤率 &lt; 30% ｜ 平均分數 &lt; 20 ｜ 連續 D 等（≥3場）</div>
-  `;
 }
 
 loadData();
