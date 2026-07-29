@@ -3,79 +3,124 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SWAG Creator KPI Dashboard v2</title>
+<title>SWAG 才藝主播 KPI 儀表板</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap');
-/* SWAG Dark Theme tokens（Design Wiki: Primary #00D2BE / Surface #191919 / Container #232323） */
+/* ══════════════════════════════════════════════════════════════
+   SWAG 官方 Design Token（Dark.tokens.json / Figma Variables 匯出）
+   ── 官方定義 ──────────────────────────────────────────────────
+   Primary/Brand #00D2BE ｜ Secondary #FFFFFF ｜ Tertiary #474747
+   Surface #191919 ｜ Surface Container #232323
+   Error #CF0404 ｜ Info #60C4E8 ｜ Text Tertiary #646464
+   字體 PingFang TC ｜ 圓角 4/8/12/16/28
+   ── 補充色（官方 Token 未定義，為 10 級徽章與圖表可讀性另選，
+      刻意取主色／資訊色的鄰近色域，避免與品牌色衝突）───────────
+   Gold #F5B40B（S 級）｜ Primary Soft #4DE3D4（C 級）
+   ══════════════════════════════════════════════════════════════ */
 :root {
-  --bg: #141414; --bg2: #191919; --bg3: #232323; --bg4: #2c2c2c;
-  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.14);
-  --text: #f2f2f0; --text2: #9a9a94; --text3: #646464;
-  --accent: #00D2BE; --accent2: #4de3d4;
-  --green: #3ecf8e; --amber: #f5b40b; --red: #f87171; --blue: #60C4E8; --pink: #f472b6;
-  --mono: 'IBM Plex Mono', monospace; --sans: 'Noto Sans TC', 'PingFang TC', sans-serif;
+  --primary: #00D2BE;
+  --white: #FFFFFF;
+  --tertiary: #474747;
+  --surface: #191919;
+  --container: #232323;
+  --error: #CF0404;
+  --info: #60C4E8;
+  --text-tertiary: #646464;
+  --gold: #F5B40B;
+  --primary-soft: #4DE3D4;
+  --text: rgba(255,255,255,0.92);
+  --text2: rgba(255,255,255,0.60);
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.16);
+  --sans: 'PingFang TC', -apple-system, BlinkMacSystemFont, 'Noto Sans TC', sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; min-height: 100vh; }
-.topbar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 52px; position: sticky; top: 0; z-index: 100; }
-.logo { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 13px; font-weight: 500; letter-spacing: 0.05em; color: var(--accent); }
-.logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+body { background: var(--surface); color: var(--text); font-family: var(--sans); font-size: 14px; min-height: 100vh; }
+
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 52px; position: sticky; top: 0; z-index: 100; }
+.logo { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 13px; letter-spacing: 0.05em; color: var(--primary); }
+.logo-dot { width: 8px; height: 8px; border-radius: 1000px; background: var(--primary); animation: pulse 2s infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-.topbar-right { font-family: var(--mono); font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 12px; }
-.refresh-btn { background: transparent; border: 1px solid var(--border2); color: var(--text2); font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
-.refresh-btn:hover { border-color: var(--accent); color: var(--accent2); }
-.main { max-width: 1200px; margin: 0 auto; padding: 24px 24px 48px; }
-.section-title { font-size: 16px; font-family: var(--mono); letter-spacing: 0.08em; color: #ffffff; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-.section-title::before { content: ''; width: 4px; height: 16px; border-radius: 2px; background: var(--accent); }
+.topbar-right { font-family: var(--mono); font-size: 11px; color: var(--text-tertiary); display: flex; align-items: center; gap: 12px; }
+.btn { background: transparent; border: 1px solid var(--border2); color: var(--text2); font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
+.btn:hover { border-color: var(--primary); color: var(--primary); }
+
+.tabbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; gap: 4px; position: sticky; top: 52px; z-index: 99; }
+.tab { background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text2); font-family: var(--sans); font-size: 14px; padding: 12px 18px; cursor: pointer; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.main { max-width: 1240px; margin: 0 auto; padding: 24px 24px 48px; }
+.section-title { font-size: 15px; color: var(--white); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.section-title::before { content: ''; width: 4px; height: 16px; border-radius: 4px; background: var(--primary); flex-shrink: 0; }
 .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
-.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 24px; }
-.metric { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
-.metric-label { font-size: 12px; color: var(--text2); font-family: var(--mono); letter-spacing: 0.04em; margin-bottom: 6px; }
+.card { background: var(--container); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; }
+.card-title { font-size: 14px; color: var(--white); margin-bottom: 12px; }
+
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 24px; }
+.metric { background: var(--container); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+.metric-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
 .metric-value { font-size: 26px; font-weight: 700; font-family: var(--mono); line-height: 1; font-variant-numeric: tabular-nums; }
-.metric-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
-.badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-family: var(--mono); font-size: 11px; font-weight: 500; }
-.badge-S\+,.badge-S { background: rgba(245,180,11,0.15); color: var(--amber); }
-.badge-A\+,.badge-A { background: rgba(62,207,142,0.12); color: var(--green); }
-.badge-B\+,.badge-B { background: rgba(96,196,232,0.12); color: var(--blue); }
-.badge-C\+,.badge-C { background: rgba(0,210,190,0.12); color: var(--accent2); }
-.badge-D\+,.badge-D { background: rgba(154,154,148,0.1); color: var(--text2); }
-.badge-warn { background: rgba(248,113,113,0.12); color: var(--red); }
+.metric-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; }
+
+.badge { display: inline-flex; align-items: center; justify-content: center; padding: 2px 8px; border-radius: 4px; font-family: var(--mono); font-size: 11px; min-width: 32px; }
+.badge-S\+, .badge-S { background: rgba(245,180,11,0.16); color: var(--gold); }
+.badge-A\+, .badge-A { background: rgba(0,210,190,0.16); color: var(--primary); }
+.badge-B\+, .badge-B { background: rgba(96,196,232,0.14); color: var(--info); }
+.badge-C\+, .badge-C { background: rgba(77,227,212,0.12); color: var(--primary-soft); }
+.badge-D\+, .badge-D { background: rgba(255,255,255,0.07); color: var(--text2); }
+.badge-warn { background: rgba(207,4,4,0.16); color: #FF6B6B; }
+
 .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th { text-align: left; font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--text3); padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th { text-align: left; font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text-tertiary); padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
 td { padding: 9px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text2); vertical-align: middle; white-space: nowrap; font-variant-numeric: tabular-nums; }
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: rgba(255,255,255,0.02); }
-td.em { color: var(--text); font-weight: 500; }
+td.em { color: var(--text); }
 td.mono { font-family: var(--mono); font-size: 12px; }
+td.score { font-family: var(--mono); font-size: 15px; color: var(--white); }
 tr.top1 td { background: rgba(0,210,190,0.06); }
-.rank { font-family: var(--mono); font-size: 12px; color: var(--text3); width: 34px; }
-.rank.r1 { color: var(--amber); font-weight: 700; }
-.rank.r2, .rank.r3 { color: var(--text); font-weight: 500; }
-.two-col { display: grid; grid-template-columns: 2fr 3fr; gap: 16px; margin-bottom: 24px; }
-@media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
-select { background: var(--bg3); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 7px 28px 7px 12px; outline: none; cursor: pointer; width: 100%; max-width: 320px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23646464' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
-select:focus { border-color: var(--accent); }
-.date-input { background: var(--bg3); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 7px 12px; outline: none; cursor: pointer; }
-.date-input:focus { border-color: var(--accent); }
-.select-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-.select-label { font-family: var(--mono); font-size: 11px; color: var(--text3); white-space: nowrap; }
-.chart-wrap { position: relative; width: 100%; height: 220px; }
-.warn-row td { background: rgba(248,113,113,0.04); }
-.score-bar-wrap { display: flex; align-items: center; gap: 8px; min-width: 110px; }
-.score-bar { height: 4px; border-radius: 2px; background: var(--bg4); flex: 1; overflow: hidden; }
-.score-bar-fill { height: 100%; border-radius: 2px; }
-.score-mini { font-family: var(--mono); font-size: 12px; color: var(--text); }
-.loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--text3); font-family: var(--mono); font-size: 12px; gap: 10px; }
-.spinner { width: 16px; height: 16px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.error-msg { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); border-radius: 8px; padding: 12px 16px; color: var(--red); font-family: var(--mono); font-size: 12px; }
-.tag-company { font-size: 10px; padding: 1px 6px; border-radius: 3px; background: rgba(96,196,232,0.1); color: var(--blue); font-family: var(--mono); }
-.no-data { text-align: center; padding: 24px; color: var(--text3); font-size: 12px; font-family: var(--mono); }
-.avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--blue)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; color: #0b2b28; flex-shrink: 0; }
+.warn-row td { background: rgba(207,4,4,0.05); }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+@media (max-width: 820px) { .two-col { grid-template-columns: 1fr; } }
+.chart-wrap { position: relative; width: 100%; height: 240px; }
+
+select { background: var(--container); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 8px 30px 8px 12px; outline: none; cursor: pointer; width: 100%; max-width: 320px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23646464' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+select:focus { border-color: var(--primary); }
+.date-input { background: var(--container); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 8px 12px; outline: none; cursor: pointer; }
+.date-input:focus { border-color: var(--primary); }
+.select-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.select-label { font-size: 12px; color: var(--text-tertiary); white-space: nowrap; }
+
+.avatar { width: 44px; height: 44px; border-radius: 1000px; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: var(--surface); flex-shrink: 0; }
 .user-profile-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+
+.cmp-row { display: grid; grid-template-columns: 96px 1fr 156px; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.cmp-row:last-child { border-bottom: none; }
+.cmp-name { font-size: 12px; color: var(--text2); }
+.cmp-bars { display: flex; flex-direction: column; gap: 4px; }
+.cmp-bar { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.05); overflow: hidden; }
+.cmp-bar-fill { height: 100%; border-radius: 4px; }
+.cmp-nums { font-family: var(--mono); font-size: 12px; text-align: right; color: var(--text2); }
+.cmp-diff { font-family: var(--mono); font-size: 11px; padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
+.cmp-up { background: rgba(0,210,190,0.14); color: var(--primary); }
+.cmp-down { background: rgba(255,255,255,0.07); color: var(--text2); }
+.cmp-legend { display: flex; gap: 14px; font-size: 11px; color: var(--text-tertiary); margin-bottom: 10px; flex-wrap: wrap; }
+.cmp-key { display: inline-flex; align-items: center; gap: 5px; }
+.cmp-swatch { width: 10px; height: 10px; border-radius: 2px; }
+
+.loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--text-tertiary); font-family: var(--mono); font-size: 12px; gap: 10px; }
+.spinner { width: 16px; height: 16px; border: 2px solid var(--border2); border-top-color: var(--primary); border-radius: 1000px; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error-msg { background: rgba(207,4,4,0.08); border: 1px solid rgba(207,4,4,0.24); border-radius: 8px; padding: 12px 16px; color: #FF6B6B; font-family: var(--mono); font-size: 12px; }
+.tag-company { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(96,196,232,0.1); color: var(--info); font-family: var(--mono); }
+.no-data { text-align: center; padding: 24px; color: var(--text-tertiary); font-size: 12px; }
+.footnote { font-size: 11px; color: var(--text-tertiary); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
 </style>
 </head>
 <body>
@@ -84,56 +129,70 @@ select:focus { border-color: var(--accent); }
   <div class="logo"><div class="logo-dot"></div>SWAG TALENT CREATOR MONITOR</div>
   <div class="topbar-right">
     <span id="last-updated">載入中…</span>
-    <button class="refresh-btn" onclick="loadData()">↺ 重新整理</button>
+    <button class="btn" onclick="loadData()">↺ 重新整理</button>
   </div>
+</div>
+
+<div class="tabbar">
+  <button class="tab active" id="tab-btn-overview" onclick="switchTab('overview')">每日總覽</button>
+  <button class="tab" id="tab-btn-user" onclick="switchTab('user')">主播個人查詢</button>
 </div>
 
 <div class="main">
 
-  <div id="yesterday-section">
-    <div class="section-title" id="yesterday-title">昨日表現</div>
+  <!-- ═══════════ 分頁 1：每日總覽 ═══════════ -->
+  <div class="tab-panel active" id="panel-overview">
+
+    <div class="section-title" id="yesterday-title">才藝主播昨日表現</div>
     <div id="yesterday-metrics" class="metric-grid">
       <div class="loading"><div class="spinner"></div>載入資料…</div>
     </div>
     <div class="card" style="margin-bottom:24px">
       <div id="yesterday-table"><div class="loading"><div class="spinner"></div></div></div>
     </div>
-  </div>
 
-  <div class="section-title">近30天整體表現</div>
-  <div id="monthly-metrics" class="metric-grid">
-    <div class="loading"><div class="spinner"></div></div>
-  </div>
-  <div class="two-col">
+    <div class="section-title">近30天整體表現</div>
+    <div id="monthly-metrics" class="metric-grid">
+      <div class="loading"><div class="spinner"></div></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">等級分布</div>
+        <div class="chart-wrap"><canvas id="lvChart" role="img" aria-label="近30天主播等級分布橫向長條圖"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">每日開播人數</div>
+        <div class="chart-wrap"><canvas id="dailyChart" role="img" aria-label="每日開播主播人數折線圖，灰底區塊為週末"></canvas></div>
+        <div class="footnote">灰底區塊為週末（六、日）</div>
+      </div>
+    </div>
+
+    <div class="section-title">需要關心的主播</div>
     <div class="card">
-      <div style="font-size:14px;font-family:var(--mono);color:#ffffff;letter-spacing:0.04em;margin-bottom:12px">等級分布</div>
-      <div class="chart-wrap"><canvas id="lvChart" role="img" aria-label="近30天主播等級分布圓餅圖"></canvas></div>
+      <div id="warn-table"><div class="loading"><div class="spinner"></div></div></div>
     </div>
-    <div class="card">
-      <div style="font-size:14px;font-family:var(--mono);color:#ffffff;letter-spacing:0.04em;margin-bottom:12px">每日開播人數</div>
-      <div class="chart-wrap"><canvas id="dailyChart" role="img" aria-label="每日開播主播人數折線圖"></canvas></div>
-    </div>
+
   </div>
 
-  <div class="section-title">主播個人查詢</div>
-  <div class="card" style="margin-bottom:24px">
-    <div class="select-row">
-      <span class="select-label">選擇主播</span>
-      <select id="userSelect" onchange="renderUserDetail()">
-        <option value="">— 請選擇 —</option>
-      </select>
-      <span class="select-label" style="margin-left:8px">日期區間</span>
-      <input type="date" id="userFrom" class="date-input" onchange="renderUserDetail()">
-      <span style="color:var(--text3);font-family:var(--mono);font-size:12px">—</span>
-      <input type="date" id="userTo" class="date-input" onchange="renderUserDetail()">
-      <button class="refresh-btn" onclick="clearUserDateFilter()">✕ 清除</button>
-    </div>
-    <div id="user-detail"><div class="no-data">請選擇主播查看各項指標</div></div>
-  </div>
+  <!-- ═══════════ 分頁 2：主播個人查詢 ═══════════ -->
+  <div class="tab-panel" id="panel-user">
 
-  <div class="section-title">需要關心的主播</div>
-  <div class="card">
-    <div id="warn-table"><div class="loading"><div class="spinner"></div></div></div>
+    <div class="section-title">主播個人查詢</div>
+    <div class="card" style="margin-bottom:24px">
+      <div class="select-row">
+        <span class="select-label">選擇主播</span>
+        <select id="userSelect" onchange="renderUserDetail()">
+          <option value="">— 請選擇 —</option>
+        </select>
+        <span class="select-label" style="margin-left:8px">日期區間</span>
+        <input type="date" id="userFrom" class="date-input" onchange="renderUserDetail()">
+        <span style="color:var(--text-tertiary);font-family:var(--mono);font-size:12px">—</span>
+        <input type="date" id="userTo" class="date-input" onchange="renderUserDetail()">
+        <button class="btn" onclick="clearUserDateFilter()">✕ 清除</button>
+      </div>
+      <div id="user-detail"><div class="no-data">請選擇主播查看各項指標</div></div>
+    </div>
+
   </div>
 
 </div>
@@ -142,34 +201,58 @@ select:focus { border-color: var(--accent); }
 const WEBHOOK_URL = 'https://swagops.app.n8n.cloud/webhook/talent-creator-dashboard-v2';
 
 let data = null;
-let lvChart, dailyChart;
+let lvChart, dailyChart, userChart;
 
-function lvColor(lv) {
-  // 新制 10 級（2026-07-21）：S+/S 琥珀、A+/A 綠、B+/B 藍、C+/C teal、D+/D 灰
-  return {
-    'S+':'#f5b40b','S':'#fbbf24',
-    'A+':'#3ecf8e','A':'#5ddba3',
-    'B+':'#60C4E8','B':'#8ad4ee',
-    'C+':'#00D2BE','C':'#4de3d4',
-    'D+':'#8a8a84','D':'#646464'
-  }[lv] || '#646464';
+/* ── 分頁切換 ── */
+function switchTab(name) {
+  ['overview','user'].forEach(n => {
+    document.getElementById('panel-'+n).classList.toggle('active', n === name);
+    document.getElementById('tab-btn-'+n).classList.toggle('active', n === name);
+  });
 }
 
-function scoreBarColor(s) {
-  const n = parseFloat(s)||0;
-  if (n >= 90) return '#f5b40b';
-  if (n >= 75) return '#3ecf8e';
-  if (n >= 60) return '#60C4E8';
+/* ── 等級色（新制 10 級）── */
+function lvColor(lv) {
+  return {
+    'S+':'#F5B40B','S':'#FBC948',
+    'A+':'#00D2BE','A':'#33DBCB',
+    'B+':'#60C4E8','B':'#8AD4EE',
+    'C+':'#4DE3D4','C':'#7BEBE0',
+    'D+':'#8A8A8A','D':'#646464'
+  }[lv] || '#646464';
+}
+function scoreColor(s) {
+  const n = parseFloat(s) || 0;
+  if (n >= 85) return '#F5B40B';
+  if (n >= 70) return '#00D2BE';
+  if (n >= 55) return '#60C4E8';
   return '#646464';
 }
 
+const LV_ORDER = ['S+','S','A+','A','B+','B','C+','C','D+','D'];
+
+/* ── 日期工具 ── */
 function fmtInputDate(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,'0');
-  const dd = String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${dd}`;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function ymdToParts(s) {
+  s = String(s);
+  return { y:+s.slice(0,4), m:+s.slice(4,6), d:+s.slice(6,8) };
+}
+function dowOf(ymd) {
+  const p = ymdToParts(ymd);
+  return new Date(p.y, p.m-1, p.d).getDay();   // 0=日 6=六
+}
+/* 業務日視窗字串，與 Slack 通知同格式：7/28 05:00–7/29 05:00 */
+function bizWindowLabel(ymd) {
+  const p = ymdToParts(ymd);
+  const start = new Date(p.y, p.m-1, p.d);
+  const end   = new Date(p.y, p.m-1, p.d + 1);
+  const f = d => `${d.getMonth()+1}/${d.getDate()}`;
+  return `${f(start)} 05:00–${f(end)} 05:00`;
 }
 
+/* ══════════ 載入 ══════════ */
 async function loadData() {
   document.getElementById('last-updated').textContent = '載入中…';
   document.getElementById('yesterday-metrics').innerHTML = '<div class="loading"><div class="spinner"></div>載入資料…</div>';
@@ -183,7 +266,10 @@ async function loadData() {
     data = await res.json();
     if (!data.ok) throw new Error('Webhook 回傳錯誤');
     document.getElementById('last-updated').textContent = `更新時間 ${new Date(data.generated_at).toLocaleString('zh-TW')}`;
-    renderAll();
+    renderYesterday();
+    renderMonthly();
+    buildUserSelect();
+    renderWarnTable();
   } catch(e) {
     const msg = `<div class="error-msg">⚠ 無法載入資料：${e.message}</div>`;
     document.getElementById('yesterday-metrics').innerHTML = msg;
@@ -193,63 +279,54 @@ async function loadData() {
   }
 }
 
-function renderAll() {
-  renderYesterday();
-  renderMonthly();
-  buildUserSelect();
-  renderWarnTable();
-}
-
+/* ══════════ 昨日表現 ══════════ */
 function renderYesterday() {
   const s = data.yesterday_summary;
-  const t = data.yesterday_table;
+  /* 同 Slack 排序規則：分數高 → 低 */
+  const rows = [...(data.yesterday_table || [])]
+    .sort((a,b) => (parseFloat(b.score_ttl)||0) - (parseFloat(a.score_ttl)||0));
 
   if (s?.date) {
-    const d = String(s.date);
-    const mm = parseInt(d.slice(4, 6));
-    const dd = parseInt(d.slice(6, 8));
-    document.getElementById('yesterday-title').textContent = `昨日表現（${mm}/${dd}）`;
+    document.getElementById('yesterday-title').textContent =
+      `才藝主播昨日表現（${bizWindowLabel(s.date)}）`;
   }
 
   if (!s || s.active_count === 0) {
-    document.getElementById('yesterday-metrics').innerHTML = `<div class="metric"><div class="metric-label">昨日（${s?.date||''}）</div><div class="metric-value" style="color:var(--text3)">0</div><div class="metric-sub">無開播資料</div></div>`;
+    document.getElementById('yesterday-metrics').innerHTML =
+      `<div class="metric"><div class="metric-label">開播人數</div><div class="metric-value" style="color:var(--text-tertiary)">0</div><div class="metric-sub">昨日無開播資料</div></div>`;
     document.getElementById('yesterday-table').innerHTML = '<div class="no-data">昨日尚無資料</div>';
     return;
   }
 
   document.getElementById('yesterday-metrics').innerHTML = `
-    <div class="metric"><div class="metric-label">開播人數</div><div class="metric-value" style="color:var(--blue)">${s.active_count}</div><div class="metric-sub">昨日</div></div>
-    <div class="metric"><div class="metric-label">平均分數</div><div class="metric-value" style="color:var(--accent2)">${s.avg_score}</div><div class="metric-sub">kpi_score</div></div>
-    <div class="metric"><div class="metric-label">最高分</div><div class="metric-value" style="color:var(--green)">${s.top_user?.score||'-'}</div><div class="metric-sub">${s.top_user?.name||''}</div></div>
-    <div class="metric"><div class="metric-label">總獲鑽量</div><div class="metric-value" style="color:var(--amber)">${(s.total_diamond||0).toLocaleString()}</div><div class="metric-sub">kpi_5</div></div>
+    <div class="metric"><div class="metric-label">📺 開播人數</div><div class="metric-value" style="color:var(--info)">${s.active_count}</div><div class="metric-sub">昨日</div></div>
+    <div class="metric"><div class="metric-label">🎯 平均分數</div><div class="metric-value" style="color:var(--primary)">${s.avg_score}</div><div class="metric-sub">score_ttl</div></div>
+    <div class="metric"><div class="metric-label">🏆 最高分</div><div class="metric-value" style="color:var(--gold)">${s.top_user?.score ?? '-'}</div><div class="metric-sub">${s.top_user?.name || ''}</div></div>
+    <div class="metric"><div class="metric-label">🔹 總獲鑽量</div><div class="metric-value" style="color:var(--primary-soft)">${(s.total_diamond||0).toLocaleString()}</div><div class="metric-sub">kpi_5</div></div>
   `;
 
+  /* 欄位順序：等級 → 分數 → 主播 → 公司 → 其餘指標 → 時薪 */
   document.getElementById('yesterday-table').innerHTML = `
     <div class="tbl-wrap">
     <table>
       <thead><tr>
-        <th>#</th><th>主播</th><th>所屬公司</th><th>CCU</th><th>聊天</th><th>新用戶</th><th>人均分鐘</th><th>獲鑽</th><th>開播時長</th><th>分數</th><th>等級</th><th>時薪</th>
+        <th>等級</th><th>分數</th><th>主播</th><th>所屬公司</th>
+        <th>獲鑽</th><th>開播時長</th><th>CCU</th><th>聊天</th><th>新用戶</th><th>人均分鐘</th><th>時薪</th>
       </tr></thead>
       <tbody>
-        ${t.map((r,i)=>`
+        ${rows.map((r,i)=>`
           <tr class="${i===0?'top1':''}">
-            <td class="rank r${i+1}">${i===0?'🏆':i+1}</td>
-            <td class="em">${r.name}</td>
-            <td>${r.company?`<span class="tag-company">${r.company}</span>`:'-'}</td>
-            <td class="mono">${r.kpi_1||'-'}</td>
-            <td class="mono">${r.kpi_2||'-'}</td>
-            <td class="mono">${r.kpi_3||'-'}</td>
-            <td class="mono">${r.kpi_4||'-'}</td>
-            <td class="mono">${r.kpi_5?(parseFloat(r.kpi_5)||0).toLocaleString():'-'}</td>
-            <td class="mono">${r.kpi_6_hour?parseFloat(r.kpi_6_hour).toFixed(1)+'h':'-'}</td>
-            <td>
-              <div class="score-bar-wrap">
-                <span class="score-mini">${r.score_ttl}</span>
-                <div class="score-bar"><div class="score-bar-fill" style="width:${Math.min(parseFloat(r.score_ttl)/100*100,100)}%;background:${scoreBarColor(r.score_ttl)}"></div></div>
-              </div>
-            </td>
             <td><span class="badge badge-${r.score_lv}">${r.score_lv}</span></td>
-            <td class="mono" style="color:var(--amber)">$${r.score_pay||'-'}</td>
+            <td class="score" style="color:${scoreColor(r.score_ttl)}">${r.score_ttl}</td>
+            <td class="em">${r.name}</td>
+            <td>${r.company ? `<span class="tag-company">${r.company}</span>` : '-'}</td>
+            <td class="mono">${r.kpi_5 ? (parseFloat(r.kpi_5)||0).toLocaleString() : '-'}</td>
+            <td class="mono">${r.kpi_6_hour ? parseFloat(r.kpi_6_hour).toFixed(1)+'h' : '-'}</td>
+            <td class="mono">${r.kpi_1 ?? '-'}</td>
+            <td class="mono">${r.kpi_2 ?? '-'}</td>
+            <td class="mono">${r.kpi_3 ?? '-'}</td>
+            <td class="mono">${r.kpi_4 ?? '-'}</td>
+            <td class="mono" style="color:var(--gold)">$${r.score_pay ?? '-'}</td>
           </tr>
         `).join('')}
       </tbody>
@@ -258,71 +335,259 @@ function renderYesterday() {
   `;
 }
 
+/* ══════════ 近30天整體 ══════════ */
 function renderMonthly() {
   const m = data.monthly_summary;
   if (!m) return;
 
-  const highPerf = (m.lv_counts['S+']||0)+(m.lv_counts['S']||0)+(m.lv_counts['A+']||0)+(m.lv_counts['A']||0);
+  const highPerf = ['S+','S','A+','A'].reduce((a,l)=>a+(m.lv_counts[l]||0), 0);
   document.getElementById('monthly-metrics').innerHTML = `
-    <div class="metric"><div class="metric-label">活躍主播</div><div class="metric-value" style="color:var(--blue)">${m.active_count}</div><div class="metric-sub">近30天有開播</div></div>
-    <div class="metric"><div class="metric-label">總開播場次</div><div class="metric-value" style="color:var(--accent2)">${m.total_sessions}</div><div class="metric-sub">累計</div></div>
-    <div class="metric"><div class="metric-label">平均分數</div><div class="metric-value" style="color:var(--green)">${m.avg_score}</div><div class="metric-sub">score_ttl</div></div>
-    <div class="metric"><div class="metric-label">總獲鑽量</div><div class="metric-value" style="color:var(--amber)">${(m.total_diamond/10000).toFixed(1)}萬</div><div class="metric-sub">kpi_5</div></div>
-    <div class="metric"><div class="metric-label">A 以上主播</div><div class="metric-value" style="color:var(--amber)">${highPerf}</div><div class="metric-sub">高績效人數</div></div>
+    <div class="metric"><div class="metric-label">活躍主播</div><div class="metric-value" style="color:var(--info)">${m.active_count}</div><div class="metric-sub">近30天有開播</div></div>
+    <div class="metric"><div class="metric-label">總開播場次</div><div class="metric-value" style="color:var(--primary)">${m.total_sessions}</div><div class="metric-sub">累計</div></div>
+    <div class="metric"><div class="metric-label">平均分數</div><div class="metric-value" style="color:var(--primary-soft)">${m.avg_score}</div><div class="metric-sub">score_ttl</div></div>
+    <div class="metric"><div class="metric-label">總獲鑽量</div><div class="metric-value" style="color:var(--gold)">${(m.total_diamond/10000).toFixed(1)}萬</div><div class="metric-sub">kpi_5</div></div>
+    <div class="metric"><div class="metric-label">A 以上主播</div><div class="metric-value" style="color:var(--gold)">${highPerf}</div><div class="metric-sub">高績效人數</div></div>
   `;
 
   renderLvChart(m.lv_counts);
   renderDailyChart(m.daily_series);
 }
 
+/* 等級分布：橫向長條圖（S+ → D 由上而下），長條末端直接標人數 */
 function renderLvChart(lvCounts) {
-  const lvOrder = ['S+','S','A+','A','B+','B','C+','C','D+','D'];
-  const labels  = lvOrder.filter(l=>lvCounts[l]);
-  const vals    = labels.map(l=>lvCounts[l]);
-  const colors  = labels.map(l=>lvColor(l));
+  const labels = LV_ORDER.filter(l => lvCounts[l]);
+  const vals   = labels.map(l => lvCounts[l]);
+  const colors = labels.map(l => lvColor(l));
 
   const ctx = document.getElementById('lvChart').getContext('2d');
   if (lvChart) lvChart.destroy();
   lvChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: { labels, datasets: [{ data: vals, backgroundColor: colors, borderWidth: 2, borderColor: '#191919', hoverOffset: 4 }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label}: ${c.raw} 人` } } } }
+    type: 'bar',
+    data: { labels, datasets: [{ data: vals, backgroundColor: colors, borderWidth: 0, borderRadius: 4, barThickness: 14 }] },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { right: 44 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => ` ${c.raw} 人` } }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' },
+             ticks: { color: '#646464', stepSize: 1, precision: 0, font: { family: 'ui-monospace, Menlo, monospace', size: 11 } },
+             beginAtZero: true },
+        y: { grid: { display: false },
+             ticks: { color: 'rgba(255,255,255,0.6)', font: { family: 'ui-monospace, Menlo, monospace', size: 12 } } }
+      }
+    },
+    plugins: [{
+      id: 'countLabel',
+      afterDatasetsDraw(chart) {
+        const { ctx } = chart;
+        ctx.save();
+        ctx.font = '12px ui-monospace, Menlo, monospace';
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.textBaseline = 'middle';
+        chart.getDatasetMeta(0).data.forEach((bar, i) => ctx.fillText(`${vals[i]} 人`, bar.x + 8, bar.y));
+        ctx.restore();
+      }
+    }]
   });
-
-  const wrap = document.getElementById('lvChart').parentElement;
-  let leg = wrap.parentElement.querySelector('.chart-legend');
-  if (!leg) { leg = document.createElement('div'); leg.className='chart-legend'; leg.style.cssText='margin-top:10px;display:flex;flex-wrap:wrap'; wrap.parentElement.appendChild(leg); }
-  leg.innerHTML = labels.map((l,i)=>`<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);margin-right:12px"><span style="width:10px;height:10px;border-radius:2px;background:${colors[i]}"></span>${l} ${vals[i]}人</span>`).join('');
 }
 
+/* 每日開播人數：水平標籤＋每 7 天一刻度＋月份只在換月時出現＋週末底色帶 */
 function renderDailyChart(series) {
   if (!series || !series.length) return;
+
+  const n = series.length;
+  let prevMonth = null;
+  const tickText = series.map((d, i) => {
+    if ((n - 1 - i) % 7 !== 0) return '';          // 由最後一天往回數，確保最新一天一定有標籤
+    const p = ymdToParts(d.date);
+    const txt = (prevMonth === null || p.m !== prevMonth) ? `${p.m}/${p.d}` : `${p.d}`;
+    prevMonth = p.m;
+    return txt;
+  });
+
   const ctx = document.getElementById('dailyChart').getContext('2d');
   if (dailyChart) dailyChart.destroy();
   dailyChart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: series.map(d=>d.label),
-      datasets: [{ label:'開播人數', data: series.map(d=>d.count), borderColor:'#00D2BE', backgroundColor:'rgba(0,210,190,0.08)', fill:true, tension:0.4, pointRadius:4, pointBackgroundColor:'#00D2BE', pointBorderColor:'#191919', pointBorderWidth:2 }]
+      labels: series.map(d => d.label),
+      datasets: [{
+        label: '開播人數', data: series.map(d => d.count),
+        borderColor: '#00D2BE', backgroundColor: 'rgba(0,210,190,0.08)',
+        fill: true, tension: 0.35, borderWidth: 2,
+        pointRadius: 0, pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#00D2BE', pointHoverBorderColor: '#191919', pointHoverBorderWidth: 2
+      }]
     },
-    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales: { x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#646464',font:{family:"'IBM Plex Mono'"}}}, y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#646464',stepSize:1,font:{family:"'IBM Plex Mono'"}},beginAtZero:true} } }
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { title: items => series[items[0].dataIndex].label, label: c => ` ${c.raw} 人開播` } }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' },
+             ticks: { color: '#646464', autoSkip: false, maxRotation: 0, minRotation: 0,
+                      font: { family: 'ui-monospace, Menlo, monospace', size: 11 },
+                      callback: (v, i) => tickText[i] || '' } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' },
+             ticks: { color: '#646464', stepSize: 2, precision: 0, font: { family: 'ui-monospace, Menlo, monospace', size: 11 } },
+             beginAtZero: true }
+      }
+    },
+    plugins: [{
+      id: 'weekendBand',
+      beforeDatasetsDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+        const x = scales.x;
+        if (!x) return;
+        const step = (x.getPixelForValue(1) - x.getPixelForValue(0)) || 10;
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,255,255,0.045)';
+        series.forEach((d, i) => {
+          const dow = dowOf(d.date);
+          if (dow === 0 || dow === 6) {
+            ctx.fillRect(x.getPixelForValue(i) - step/2, chartArea.top, step, chartArea.bottom - chartArea.top);
+          }
+        });
+        ctx.restore();
+      }
+    }]
   });
 }
 
+/* ══════════ 主播個人查詢 ══════════ */
 function buildUserSelect() {
   const sel = document.getElementById('userSelect');
   sel.innerHTML = '<option value="">— 請選擇 —</option>';
-  (data.user_list||[]).forEach(u => {
+  (data.user_list || []).forEach(u => {
     const opt = document.createElement('option');
     opt.value = u.uid;
-    opt.textContent = `${u.name}${u.company?' ['+u.company+']':''}`;
+    opt.textContent = `${u.name}${u.company ? ' ['+u.company+']' : ''}`;
     sel.appendChild(opt);
   });
+  const to = new Date(), from = new Date();
+  from.setDate(to.getDate() - 29);
+  document.getElementById('userFrom').value = fmtInputDate(from);
+  document.getElementById('userTo').value   = fmtInputDate(to);
+}
 
-  const toDate   = new Date();
-  const fromDate = new Date(); fromDate.setDate(toDate.getDate() - 29);
-  document.getElementById('userFrom').value = fmtInputDate(fromDate);
-  document.getElementById('userTo').value   = fmtInputDate(toDate);
+const CMP_FIELDS = [
+  { key:'score_ttl',  name:'分數',     fmt:v => v.toFixed(1) },
+  { key:'kpi_1',      name:'CCU',      fmt:v => v.toFixed(1) },
+  { key:'kpi_2',      name:'聊天',     fmt:v => v.toFixed(1) },
+  { key:'kpi_3',      name:'新用戶',   fmt:v => v.toFixed(1) },
+  { key:'kpi_4',      name:'人均分鐘', fmt:v => v.toFixed(2) },
+  { key:'kpi_5',      name:'獲鑽',     fmt:v => Math.round(v).toLocaleString() },
+  { key:'kpi_6_hour', name:'開播時數', fmt:v => v.toFixed(2)+'h' }
+];
+
+/* ④ 與全體平均對比：上排＝這位主播，下排＝全體平均 */
+function renderCompare(daily) {
+  const all = data.kpi_avg_all;
+  if (!all) return '';
+  const rows = CMP_FIELDS.map(f => {
+    const vals = daily.map(r => parseFloat(r[f.key])).filter(v => !isNaN(v));
+    const mine = vals.length ? vals.reduce((a,b)=>a+b,0) / vals.length : null;
+    const avg  = parseFloat(all[f.key]);
+    if (mine === null || isNaN(avg) || avg === 0) return '';
+    const diff = (mine / avg) * 100 - 100;
+    const max  = Math.max(mine, avg);
+    return `
+      <div class="cmp-row">
+        <div class="cmp-name">${f.name}</div>
+        <div class="cmp-bars">
+          <div class="cmp-bar"><div class="cmp-bar-fill" style="width:${(mine/max*100).toFixed(1)}%;background:var(--primary)"></div></div>
+          <div class="cmp-bar"><div class="cmp-bar-fill" style="width:${(avg/max*100).toFixed(1)}%;background:var(--tertiary)"></div></div>
+        </div>
+        <div class="cmp-nums">${f.fmt(mine)}
+          <span class="cmp-diff ${diff>=0?'cmp-up':'cmp-down'}">${diff>=0?'▲':'▼'}${Math.abs(diff).toFixed(0)}%</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="card" style="margin-top:16px">
+      <div class="card-title">與全體平均的對比</div>
+      <div class="cmp-legend">
+        <span class="cmp-key"><span class="cmp-swatch" style="background:var(--primary)"></span>這位主播</span>
+        <span class="cmp-key"><span class="cmp-swatch" style="background:var(--tertiary)"></span>全體平均（當月 ${all.sessions} 場）</span>
+      </div>
+      ${rows}
+      <div class="footnote">百分比＝這位主播的區間平均 ÷ 全體平均。全體平均口徑為當月所有有開播場次。</div>
+    </div>`;
+}
+
+/* ② 每日分數趨勢 */
+function renderUserChart(daily) {
+  const el = document.getElementById('userScoreChart');
+  if (!el) return;
+  const ctx = el.getContext('2d');
+  if (userChart) userChart.destroy();
+
+  const n = daily.length;
+  let prevMonth = null;
+  const tickText = daily.map((r, i) => {
+    if (n > 10 && (n - 1 - i) % 7 !== 0) return '';
+    const p = ymdToParts(r.date);
+    const txt = (prevMonth === null || p.m !== prevMonth) ? `${p.m}/${p.d}` : `${p.d}`;
+    prevMonth = p.m;
+    return txt;
+  });
+
+  userChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: daily.map(r => `${String(r.date).slice(4,6)}/${String(r.date).slice(6,8)}`),
+      datasets: [{
+        label: '分數', data: daily.map(r => parseFloat(r.score_ttl)||0),
+        borderColor: '#00D2BE', backgroundColor: 'rgba(0,210,190,0.08)',
+        fill: true, tension: 0.3, borderWidth: 2,
+        pointRadius: 3, pointBackgroundColor: daily.map(r => scoreColor(r.score_ttl)),
+        pointBorderColor: '#191919', pointBorderWidth: 2, pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => ` ${c.raw} 分（${daily[c.dataIndex].score_lv}）` } }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' },
+             ticks: { color: '#646464', autoSkip: false, maxRotation: 0, minRotation: 0,
+                      font: { family: 'ui-monospace, Menlo, monospace', size: 11 },
+                      callback: (v, i) => tickText[i] || '' } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' },
+             ticks: { color: '#646464', font: { family: 'ui-monospace, Menlo, monospace', size: 11 } },
+             beginAtZero: true, suggestedMax: 100 }
+      }
+    },
+    plugins: [{
+      id: 'weekendBandUser',
+      beforeDatasetsDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+        const x = scales.x;
+        if (!x) return;
+        const step = (x.getPixelForValue(1) - x.getPixelForValue(0)) || 10;
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,255,255,0.045)';
+        daily.forEach((r, i) => {
+          const dow = dowOf(r.date);
+          if (dow === 0 || dow === 6) {
+            ctx.fillRect(x.getPixelForValue(i) - step/2, chartArea.top, step, chartArea.bottom - chartArea.top);
+          }
+        });
+        ctx.restore();
+      }
+    }]
+  });
 }
 
 async function renderUserDetail() {
@@ -332,7 +597,6 @@ async function renderUserDetail() {
   const el   = document.getElementById('user-detail');
 
   if (!uid) { el.innerHTML = '<div class="no-data">請選擇主播查看各項指標</div>'; return; }
-
   el.innerHTML = '<div class="loading"><div class="spinner"></div>查詢中…</div>';
 
   try {
@@ -340,102 +604,113 @@ async function renderUserDetail() {
     if (from) url += `&from=${from}`;
     if (to)   url += `&to=${to}`;
 
-    const res  = await fetch(url);
-    const json = await res.json();
-    const u    = json.user_detail;
-
+    const json = await (await fetch(url)).json();
+    const u = json.user_detail;
     if (!u) { el.innerHTML = '<div class="no-data">此區間尚無資料</div>'; return; }
+    if (json.kpi_avg_all) data.kpi_avg_all = json.kpi_avg_all;
 
     const fmtLabel = s => s ? `${s.slice(0,4)}/${s.slice(4,6)}/${s.slice(6,8)}` : '—';
     const rangeLabel = (from || to) ? `${fmtLabel(from)} ～ ${fmtLabel(to)}` : '近30天';
 
+    /* ① 基本資料 ② 分數趨勢 ③ 每日明細 ④ 與全體平均對比 */
     el.innerHTML = `
       <div class="user-profile-header">
         <div class="avatar">${u.name.slice(0,2)}</div>
         <div>
           <div style="font-weight:600;font-size:15px">${u.name}</div>
-          <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:3px">${u.company||''}</div>
+          <div style="font-size:11px;color:var(--text-tertiary);font-family:var(--mono);margin-top:3px">${u.company || '（無所屬公司）'}</div>
         </div>
         <div style="margin-left:auto;text-align:right">
           <div class="badge badge-${u.best_lv}" style="font-size:14px;padding:4px 12px">${u.best_lv}</div>
-          <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:4px">最佳等級</div>
+          <div style="font-size:11px;color:var(--text-tertiary);font-family:var(--mono);margin-top:4px">最佳等級</div>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:12px">📅 查詢區間：${rangeLabel}</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
-        <div class="metric"><div class="metric-label">開播天數</div><div class="metric-value" style="color:var(--blue)">${u.active_days}</div></div>
-        <div class="metric"><div class="metric-label">平均分數</div><div class="metric-value" style="color:var(--accent2)">${u.avg_score}</div></div>
-        <div class="metric"><div class="metric-label">最高分</div><div class="metric-value" style="color:var(--green)">${u.best_score}</div></div>
-        <div class="metric"><div class="metric-label">總獲鑽</div><div class="metric-value" style="color:var(--amber)">${(u.total_diamond||0).toLocaleString()}</div></div>
+      <div style="font-size:11px;color:var(--text-tertiary);font-family:var(--mono);margin-bottom:12px">📅 查詢區間：${rangeLabel}</div>
+      <div class="metric-grid" style="margin-bottom:16px">
+        <div class="metric"><div class="metric-label">開播天數</div><div class="metric-value" style="color:var(--info)">${u.active_days}</div></div>
+        <div class="metric"><div class="metric-label">平均分數</div><div class="metric-value" style="color:var(--primary)">${u.avg_score}</div></div>
+        <div class="metric"><div class="metric-label">最高分</div><div class="metric-value" style="color:var(--gold)">${u.best_score}</div></div>
+        <div class="metric"><div class="metric-label">總獲鑽</div><div class="metric-value" style="color:var(--primary-soft)">${(u.total_diamond||0).toLocaleString()}</div></div>
       </div>
-      <div class="tbl-wrap">
-      <table>
-        <thead><tr>
-          <th>日期</th><th>CCU</th><th>聊天</th><th>新用戶</th><th>人均分鐘</th><th>獲鑽量</th><th>開播時長</th><th>分數</th><th>等級</th><th>時薪</th>
-        </tr></thead>
-        <tbody>
-          ${u.daily.map(r=>`
-            <tr>
-              <td class="mono">${String(r.date).slice(4,6)}/${String(r.date).slice(6,8)}</td>
-              <td class="mono">${r.kpi_1||'-'}</td>
-              <td class="mono">${r.kpi_2||'-'}</td>
-              <td class="mono">${r.kpi_3||'-'}</td>
-              <td class="mono">${r.kpi_4||'-'}</td>
-              <td class="mono">${r.kpi_5?(parseFloat(r.kpi_5)||0).toLocaleString():'-'}</td>
-              <td class="mono">${r.kpi_6_hour?parseFloat(r.kpi_6_hour).toFixed(1)+'h':'-'}</td>
-              <td class="mono" style="color:${scoreBarColor(r.score_ttl)}">${r.score_ttl}</td>
-              <td><span class="badge badge-${r.score_lv}">${r.score_lv}</span></td>
-              <td class="mono" style="color:var(--amber)">$${r.score_pay||'-'}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">每日分數趨勢</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="userScoreChart" role="img" aria-label="該主播每日分數折線圖"></canvas></div>
+        <div class="footnote">灰底區塊為週末（六、日）</div>
       </div>
+
+      <div class="card">
+        <div class="card-title">每日明細</div>
+        <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>等級</th><th>分數</th><th>日期</th><th>獲鑽</th><th>開播時長</th><th>CCU</th><th>聊天</th><th>新用戶</th><th>人均分鐘</th><th>時薪</th>
+          </tr></thead>
+          <tbody>
+            ${[...u.daily].reverse().map(r=>`
+              <tr>
+                <td><span class="badge badge-${r.score_lv}">${r.score_lv}</span></td>
+                <td class="score" style="color:${scoreColor(r.score_ttl)}">${r.score_ttl}</td>
+                <td class="mono">${String(r.date).slice(4,6)}/${String(r.date).slice(6,8)}</td>
+                <td class="mono">${r.kpi_5 ? (parseFloat(r.kpi_5)||0).toLocaleString() : '-'}</td>
+                <td class="mono">${r.kpi_6_hour ? parseFloat(r.kpi_6_hour).toFixed(1)+'h' : '-'}</td>
+                <td class="mono">${r.kpi_1 ?? '-'}</td>
+                <td class="mono">${r.kpi_2 ?? '-'}</td>
+                <td class="mono">${r.kpi_3 ?? '-'}</td>
+                <td class="mono">${r.kpi_4 ?? '-'}</td>
+                <td class="mono" style="color:var(--gold)">$${r.score_pay ?? '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        </div>
+      </div>
+
+      ${renderCompare(u.daily)}
     `;
+
+    renderUserChart(u.daily);
   } catch(e) {
     el.innerHTML = `<div class="error-msg">⚠ 查詢失敗：${e.message}</div>`;
   }
 }
 
 function clearUserDateFilter() {
-  const toDate   = new Date();
-  const fromDate = new Date(); fromDate.setDate(toDate.getDate() - 29);
-  document.getElementById('userFrom').value = fmtInputDate(fromDate);
-  document.getElementById('userTo').value   = fmtInputDate(toDate);
+  const to = new Date(), from = new Date();
+  from.setDate(to.getDate() - 29);
+  document.getElementById('userFrom').value = fmtInputDate(from);
+  document.getElementById('userTo').value   = fmtInputDate(to);
   renderUserDetail();
 }
 
+/* ══════════ 需要關心的主播 ══════════ */
 function renderWarnTable() {
-  const el   = document.getElementById('warn-table');
+  const el = document.getElementById('warn-table');
   const list = data.warn_list || [];
-
   if (!list.length) {
-    el.innerHTML = '<div class="no-data" style="color:var(--green)">✓ 近30天無需特別關注的主播</div>';
+    el.innerHTML = '<div class="no-data" style="color:var(--primary)">✓ 近30天無需特別關注的主播</div>';
     return;
   }
-
   el.innerHTML = `
     <div class="tbl-wrap">
     <table>
-      <thead><tr><th>主播</th><th>所屬</th><th>開播天數</th><th>出勤率</th><th>平均分數</th><th>最新等級</th><th>異常原因</th></tr></thead>
+      <thead><tr><th>最新等級</th><th>平均分數</th><th>主播</th><th>所屬公司</th><th>開播天數</th><th>出勤率</th><th>異常原因</th></tr></thead>
       <tbody>
         ${list.map(u=>`
           <tr class="warn-row">
-            <td class="em">${u.name}</td>
-            <td>${u.company?`<span class="tag-company">${u.company}</span>`:'-'}</td>
-            <td class="mono">${u.days} 天</td>
-            <td class="mono" style="color:${u.d_ratio<30?'var(--red)':'var(--amber)'}">${u.d_ratio}%</td>
-            <td class="mono" style="color:${u.avg_score<20?'var(--red)':'var(--amber)'}">${u.avg_score}</td>
             <td><span class="badge badge-${u.last_lv}">${u.last_lv}</span></td>
+            <td class="score" style="color:${scoreColor(u.avg_score)}">${u.avg_score}</td>
+            <td class="em">${u.name}</td>
+            <td>${u.company ? `<span class="tag-company">${u.company}</span>` : '-'}</td>
+            <td class="mono">${u.days} 天</td>
+            <td class="mono" style="color:${u.d_ratio<30 ? '#FF6B6B' : 'var(--gold)'}">${u.d_ratio}%</td>
             <td>${u.reasons.map(r=>`<span class="badge badge-warn" style="margin-right:4px">${r}</span>`).join('')}</td>
           </tr>
         `).join('')}
       </tbody>
     </table>
     </div>
-    <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-      ⚠ 異常判定：出勤率 &lt; 30% ｜ 平均分數 &lt; 20 ｜ 連續 D 等（≥3場）
-    </div>
+    <div class="footnote">⚠ 異常判定：出勤率 &lt; 30% ｜ 平均分數 &lt; 20 ｜ 連續 D 等（≥3場）</div>
   `;
 }
 
