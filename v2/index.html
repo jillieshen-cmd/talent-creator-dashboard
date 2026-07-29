@@ -167,11 +167,6 @@ select:focus { border-color: var(--primary); }
       </div>
     </div>
 
-    <div class="section-title">需要關心的主播</div>
-    <div class="card">
-      <div id="warn-table"><div class="loading"><div class="spinner"></div></div></div>
-    </div>
-
   </div>
 
   <!-- ═══════════ 分頁 2：主播個人查詢 ═══════════ -->
@@ -191,6 +186,11 @@ select:focus { border-color: var(--primary); }
         <button class="btn" onclick="clearUserDateFilter()">✕ 清除</button>
       </div>
       <div id="user-detail"><div class="no-data">請選擇主播查看各項指標</div></div>
+    </div>
+
+    <div class="section-title">需要關心的主播</div>
+    <div class="card">
+      <div id="warn-table"><div class="loading"><div class="spinner"></div></div></div>
     </div>
 
   </div>
@@ -311,7 +311,7 @@ function renderYesterday() {
     <table>
       <thead><tr>
         <th>等級</th><th>分數</th><th>主播</th><th>所屬公司</th>
-        <th>獲鑽</th><th>開播時長</th><th>CCU</th><th>聊天</th><th>新用戶</th><th>人均分鐘</th><th>時薪</th>
+        <th>獲鑽</th><th>開播時長</th><th>CCU</th><th>聊天</th><th>新用戶</th><th>人均分鐘</th>
       </tr></thead>
       <tbody>
         ${rows.map((r,i)=>`
@@ -326,7 +326,6 @@ function renderYesterday() {
             <td class="mono">${r.kpi_2 ?? '-'}</td>
             <td class="mono">${r.kpi_3 ?? '-'}</td>
             <td class="mono">${r.kpi_4 ?? '-'}</td>
-            <td class="mono" style="color:var(--gold)">$${r.score_pay ?? '-'}</td>
           </tr>
         `).join('')}
       </tbody>
@@ -367,16 +366,15 @@ function renderLvChart(lvCounts) {
     options: {
       indexAxis: 'y',
       responsive: true, maintainAspectRatio: false,
-      layout: { padding: { right: 44 } },
+      layout: { padding: { right: 28 } },
       plugins: {
         legend: { display: false },
         tooltip: { callbacks: { label: c => ` ${c.raw} 人` } }
       },
       scales: {
-        x: { grid: { color: 'rgba(255,255,255,0.04)' },
-             ticks: { color: '#646464', stepSize: 1, precision: 0, font: { family: 'ui-monospace, Menlo, monospace', size: 11 } },
-             beginAtZero: true },
-        y: { grid: { display: false },
+        /* 橫軸刻度與格線全部隱藏：人數已直接標在長條末端，不需要再對照軸線 */
+        x: { display: false, beginAtZero: true },
+        y: { grid: { display: false }, border: { display: false },
              ticks: { color: 'rgba(255,255,255,0.6)', font: { family: 'ui-monospace, Menlo, monospace', size: 12 } } }
       }
     },
@@ -388,7 +386,7 @@ function renderLvChart(lvCounts) {
         ctx.font = '12px ui-monospace, Menlo, monospace';
         ctx.fillStyle = 'rgba(255,255,255,0.6)';
         ctx.textBaseline = 'middle';
-        chart.getDatasetMeta(0).data.forEach((bar, i) => ctx.fillText(`${vals[i]} 人`, bar.x + 8, bar.y));
+        chart.getDatasetMeta(0).data.forEach((bar, i) => ctx.fillText(`${vals[i]}`, bar.x + 8, bar.y));
         ctx.restore();
       }
     }]
