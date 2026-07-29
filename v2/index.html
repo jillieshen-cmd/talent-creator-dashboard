@@ -106,10 +106,16 @@ select:focus { border-color: var(--primary); }
 .yd-metrics .metric { flex: 1; display: flex; flex-direction: column; justify-content: center; }
 @media (max-width: 860px) { .yd-metrics .metric { flex: none; } }
 
-/* 近30天整體表現：左 KPI ｜ 中 每日開播人數 ｜ 右 等級分布 */
-.mo-grid { display: grid; grid-template-columns: 208px minmax(0,1fr) minmax(0,1fr); gap: 16px; margin-bottom: 24px; align-items: start; }
-@media (max-width: 1120px) { .mo-grid { grid-template-columns: 208px minmax(0,1fr); } }
-@media (max-width: 860px) { .mo-grid { grid-template-columns: 1fr; } }
+/* 近30天整體表現：左 KPI ｜ 中 每日開播人數 ｜ 右 等級分布
+   三欄等高：480px（5 張含副標的 KPI 卡最少需要約 467px），兩張圖用 flex 填滿整張卡，
+   高度自然對齊 KPI 欄，不再各自寫死 px。 */
+.mo-grid { display: grid; grid-template-columns: 208px minmax(0,1fr) minmax(0,1fr); gap: 16px; margin-bottom: 24px; align-items: stretch; min-height: 480px; }
+@media (max-width: 1120px) { .mo-grid { grid-template-columns: 208px minmax(0,1fr); min-height: 0; } }
+@media (max-width: 860px) { .mo-grid { grid-template-columns: 1fr; min-height: 0; } }
+.mo-grid .yd-metrics .metric { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.mo-grid > .card { display: flex; flex-direction: column; }
+.mo-grid > .card .chart-wrap { flex: 1; height: auto; min-height: 160px; }
+@media (max-width: 1120px) { .mo-grid > .card .chart-wrap { min-height: 300px; } }
 
 /* 個人查詢頁：三欄 — 主播資訊＋KPI ｜ 分數趨勢 ｜ 與全體平均對比 */
 .user-grid { display: grid; grid-template-columns: 236px minmax(0,1fr) minmax(0,1fr); gap: 16px; margin-bottom: 16px; align-items: start; }
@@ -185,13 +191,13 @@ select:focus { border-color: var(--primary); }
       </div>
       <div class="card">
         <div class="card-title">每日開播人數</div>
-        <div class="chart-wrap" style="height:328px"><canvas id="dailyChart" role="img" aria-label="每日開播主播人數折線圖，灰底區塊為週末"></canvas></div>
+        <div class="chart-wrap"><canvas id="dailyChart" role="img" aria-label="每日開播主播人數折線圖，灰底區塊為週末"></canvas></div>
         <div class="footnote">灰底區塊為週末（六、日）</div>
       </div>
       <div class="card">
         <div class="card-title">等級分布</div>
         <div id="lv-sub" class="footnote" style="margin:-6px 0 10px;padding:0;border:none"></div>
-        <div class="chart-wrap" style="height:328px"><canvas id="lvChart" role="img" aria-label="近30天開播場次的等級分布橫向長條圖"></canvas></div>
+        <div class="chart-wrap"><canvas id="lvChart" role="img" aria-label="近30天開播場次的等級分布橫向長條圖"></canvas></div>
       </div>
     </div>
 
@@ -374,7 +380,7 @@ function renderMonthly() {
     <div class="metric"><div class="metric-label">A 以上場次</div><div class="metric-value" style="color:var(--gold)">${highPerf}</div><div class="metric-sub">占 ${highPct}%（S+/S/A+/A）</div></div>
   `;
 
-  document.getElementById('lv-sub').textContent = '開播場次計';
+  document.getElementById('lv-sub').textContent = `開播場次計 ${lvTotal} 場`;
 
   renderLvChart(m.lv_counts);
   renderDailyChart(m.daily_series);
