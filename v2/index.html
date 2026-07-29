@@ -151,12 +151,13 @@ select:focus { border-color: var(--primary); }
   </div>
 
   <div class="tabs" role="tablist">
-    <button class="tab active" role="tab" id="tab-btn-overview" onclick="switchTab('overview')">每日總覽</button>
+    <button class="tab active" role="tab" id="tab-btn-yesterday" onclick="switchTab('yesterday')">昨日表現</button>
+    <button class="tab" role="tab" id="tab-btn-monthly" onclick="switchTab('monthly')">近30天整體表現</button>
     <button class="tab" role="tab" id="tab-btn-user" onclick="switchTab('user')">主播個人查詢</button>
   </div>
 
-  <!-- ═══════════ 分頁 1：每日總覽 ═══════════ -->
-  <div class="tab-panel active" id="panel-overview">
+  <!-- ═══════════ 分頁 1：昨日表現 ═══════════ -->
+  <div class="tab-panel active" id="panel-yesterday">
 
     <div class="section-title" id="yesterday-title">才藝主播昨日表現</div>
     <div class="yd-grid">
@@ -167,6 +168,11 @@ select:focus { border-color: var(--primary); }
         <div id="yesterday-table"><div class="loading"><div class="spinner"></div></div></div>
       </div>
     </div>
+
+  </div>
+
+  <!-- ═══════════ 分頁 2：近30天整體表現 ═══════════ -->
+  <div class="tab-panel" id="panel-monthly">
 
     <div class="section-title">近30天整體表現</div>
     <div class="mo-grid">
@@ -187,7 +193,7 @@ select:focus { border-color: var(--primary); }
 
   </div>
 
-  <!-- ═══════════ 分頁 2：主播個人查詢 ═══════════ -->
+  <!-- ═══════════ 分頁 3：主播個人查詢 ═══════════ -->
   <div class="tab-panel" id="panel-user">
 
     <div class="section-title">主播個人查詢</div>
@@ -216,12 +222,15 @@ const WEBHOOK_URL = 'https://swagops.app.n8n.cloud/webhook/talent-creator-dashbo
 let data = null;
 let lvChart, dailyChart, userChart;
 
-/* ── 分頁切換 ── */
+/* ── 分頁切換 ──
+   Chart.js 在 display:none 的容器裡取到的寬度是 0，圖會畫壞，
+   所以「近30天整體表現」的兩張圖等分頁真的顯示出來才畫（每次切入重畫，尺寸才會對）。 */
 function switchTab(name) {
-  ['overview','user'].forEach(n => {
+  ['yesterday','monthly','user'].forEach(n => {
     document.getElementById('panel-'+n).classList.toggle('active', n === name);
     document.getElementById('tab-btn-'+n).classList.toggle('active', n === name);
   });
+  if (name === 'monthly' && data) renderMonthly();
 }
 
 /* ── 等級色（新制 10 級）── */
@@ -277,8 +286,9 @@ async function loadData() {
     data = await res.json();
     if (!data.ok) throw new Error('Webhook 回傳錯誤');
     renderYesterday();
-    renderMonthly();
     buildUserSelect();
+    /* 近30天分頁若正在顯示（例如按了重新整理），就直接重畫 */
+    if (document.getElementById('panel-monthly').classList.contains('active')) renderMonthly();
   } catch(e) {
     const msg = `<div class="error-msg">⚠ 無法載入資料：${e.message}</div>`;
     document.getElementById('yesterday-metrics').innerHTML = msg;
