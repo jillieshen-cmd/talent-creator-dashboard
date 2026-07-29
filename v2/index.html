@@ -38,12 +38,9 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--surface); color: var(--text); font-family: var(--sans); font-size: 14px; min-height: 100vh; }
 
-/* 頁首：標題＋副標在左，狀態與重新整理在右（同大戶戰情室版型） */
-.page-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+/* 頁首：標題在左、重新整理在右（同大戶戰情室版型） */
+.page-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
 .page-title { font-size: 24px; font-weight: 650; letter-spacing: -0.01em; margin: 0; }
-.page-sub { color: var(--text2); font-size: 13px; margin: 5px 0 0; display: flex; align-items: center; gap: 8px; }
-.live-dot { width: 7px; height: 7px; border-radius: 1000px; background: var(--primary); flex: none; animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 .btn { background: var(--container); border: 1px solid var(--border2); color: var(--text2); font-family: var(--sans); font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 .btn:hover { border-color: var(--primary); color: var(--primary); }
 
@@ -62,7 +59,6 @@ body { background: var(--surface); color: var(--text); font-family: var(--sans);
 .card { background: var(--container); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; }
 .card-title { font-size: 14px; color: var(--white); margin-bottom: 12px; }
 
-.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 24px; }
 .metric { background: var(--container); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
 .metric-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
 .metric-value { font-size: 26px; font-weight: 700; font-family: var(--mono); line-height: 1; font-variant-numeric: tabular-nums; }
@@ -90,8 +86,6 @@ th.sortable.active { color: var(--primary); }
 th .arrow { opacity: 0.5; margin-left: 3px; }
 tr.top1 td { background: rgba(0,210,190,0.06); }
 
-.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-@media (max-width: 820px) { .two-col { grid-template-columns: 1fr; } }
 .chart-wrap { position: relative; width: 100%; height: 240px; }
 
 select { background: var(--container); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 8px 30px 8px 12px; outline: none; cursor: pointer; width: 100%; max-width: 320px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23646464' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
@@ -107,6 +101,11 @@ select:focus { border-color: var(--primary); }
 .yd-grid { display: grid; grid-template-columns: 208px minmax(0,1fr); gap: 16px; margin-bottom: 24px; align-items: start; }
 @media (max-width: 860px) { .yd-grid { grid-template-columns: 1fr; } }
 .yd-metrics { display: flex; flex-direction: column; gap: 8px; }
+
+/* 近30天整體表現：左 KPI ｜ 中 每日開播人數 ｜ 右 等級分布 */
+.mo-grid { display: grid; grid-template-columns: 208px minmax(0,1fr) minmax(0,1fr); gap: 16px; margin-bottom: 24px; align-items: start; }
+@media (max-width: 1120px) { .mo-grid { grid-template-columns: 208px minmax(0,1fr); } }
+@media (max-width: 860px) { .mo-grid { grid-template-columns: 1fr; } }
 
 /* 個人查詢頁：三欄 — 主播資訊＋KPI ｜ 分數趨勢 ｜ 與全體平均對比 */
 .user-grid { display: grid; grid-template-columns: 236px minmax(0,1fr) minmax(0,1fr); gap: 16px; margin-bottom: 16px; align-items: start; }
@@ -147,10 +146,7 @@ select:focus { border-color: var(--primary); }
 <div class="main">
 
   <div class="page-header">
-    <div>
-      <h1 class="page-title">才藝主播 KPI 儀表板</h1>
-      <p class="page-sub"><span class="live-dot"></span><span id="last-updated">載入中…</span></p>
-    </div>
+    <h1 class="page-title">才藝主播 KPI 儀表板</h1>
     <button class="btn" onclick="loadData()">↺ 重新整理</button>
   </div>
 
@@ -173,19 +169,19 @@ select:focus { border-color: var(--primary); }
     </div>
 
     <div class="section-title">近30天整體表現</div>
-    <div id="monthly-metrics" class="metric-grid">
-      <div class="loading"><div class="spinner"></div></div>
-    </div>
-    <div class="two-col">
-      <div class="card">
-        <div class="card-title">等級分布</div>
-        <div id="lv-sub" class="footnote" style="margin:-6px 0 10px;padding:0;border:none"></div>
-        <div class="chart-wrap"><canvas id="lvChart" role="img" aria-label="近30天開播場次的等級分布橫向長條圖"></canvas></div>
+    <div class="mo-grid">
+      <div id="monthly-metrics" class="yd-metrics">
+        <div class="loading"><div class="spinner"></div>載入…</div>
       </div>
       <div class="card">
         <div class="card-title">每日開播人數</div>
-        <div class="chart-wrap"><canvas id="dailyChart" role="img" aria-label="每日開播主播人數折線圖，灰底區塊為週末"></canvas></div>
+        <div class="chart-wrap" style="height:328px"><canvas id="dailyChart" role="img" aria-label="每日開播主播人數折線圖，灰底區塊為週末"></canvas></div>
         <div class="footnote">灰底區塊為週末（六、日）</div>
+      </div>
+      <div class="card">
+        <div class="card-title">等級分布</div>
+        <div id="lv-sub" class="footnote" style="margin:-6px 0 10px;padding:0;border:none"></div>
+        <div class="chart-wrap" style="height:328px"><canvas id="lvChart" role="img" aria-label="近30天開播場次的等級分布橫向長條圖"></canvas></div>
       </div>
     </div>
 
@@ -271,7 +267,6 @@ function bizWindowLabel(ymd) {
 
 /* ══════════ 載入 ══════════ */
 async function loadData() {
-  document.getElementById('last-updated').textContent = '載入中…';
   document.getElementById('yesterday-metrics').innerHTML = '<div class="loading"><div class="spinner"></div>載入資料…</div>';
   document.getElementById('monthly-metrics').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   document.getElementById('yesterday-table').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
@@ -281,7 +276,6 @@ async function loadData() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     data = await res.json();
     if (!data.ok) throw new Error('Webhook 回傳錯誤');
-    document.getElementById('last-updated').textContent = `更新時間 ${new Date(data.generated_at).toLocaleString('zh-TW')}`;
     renderYesterday();
     renderMonthly();
     buildUserSelect();
@@ -353,18 +347,20 @@ function renderMonthly() {
   const m = data.monthly_summary;
   if (!m) return;
 
+  /* ⚠️ lv_counts 是「場次」口徑（每場一票），所以這裡加總出來的是場次數不是人數 */
+  const lvTotal  = Object.values(m.lv_counts).reduce((a,b)=>a+b, 0);
   const highPerf = ['S+','S','A+','A'].reduce((a,l)=>a+(m.lv_counts[l]||0), 0);
+  const highPct  = lvTotal ? (highPerf / lvTotal * 100).toFixed(1) : '0';
+
   document.getElementById('monthly-metrics').innerHTML = `
     <div class="metric"><div class="metric-label">活躍主播</div><div class="metric-value" style="color:var(--info)">${m.active_count}</div><div class="metric-sub">近30天有開播</div></div>
     <div class="metric"><div class="metric-label">總開播場次</div><div class="metric-value" style="color:var(--primary)">${m.total_sessions}</div><div class="metric-sub">累計</div></div>
     <div class="metric"><div class="metric-label">平均分數</div><div class="metric-value" style="color:var(--primary-soft)">${m.avg_score}</div><div class="metric-sub">score_ttl</div></div>
     <div class="metric"><div class="metric-label">總獲鑽量</div><div class="metric-value" style="color:var(--gold)">${(m.total_diamond/10000).toFixed(1)}萬</div><div class="metric-sub">kpi_5</div></div>
-    <div class="metric"><div class="metric-label">A 以上主播</div><div class="metric-value" style="color:var(--gold)">${highPerf}</div><div class="metric-sub">高績效人數</div></div>
+    <div class="metric"><div class="metric-label">A 以上場次</div><div class="metric-value" style="color:var(--gold)">${highPerf}</div><div class="metric-sub">占 ${highPct}%（S+/S/A+/A）</div></div>
   `;
 
-  const lvTotal = Object.values(m.lv_counts).reduce((a,b)=>a+b, 0);
-  document.getElementById('lv-sub').textContent =
-    `依開播場次計，每場一票（共 ${lvTotal} 場）`;
+  document.getElementById('lv-sub').textContent = '開播場次計';
 
   renderLvChart(m.lv_counts);
   renderDailyChart(m.daily_series);
