@@ -97,10 +97,14 @@ select:focus { border-color: var(--primary); }
 
 .avatar { width: 44px; height: 44px; border-radius: 1000px; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: var(--surface); flex-shrink: 0; }
 
-/* 昨日表現：左側四張 KPI 直排，右側表格 */
-.yd-grid { display: grid; grid-template-columns: 208px minmax(0,1fr); gap: 16px; margin-bottom: 24px; align-items: start; }
-@media (max-width: 860px) { .yd-grid { grid-template-columns: 1fr; } }
+/* 昨日表現：左側四張 KPI 直排，右側表格
+   align-items:stretch ＋ 固定 min-height ＝ 兩欄等高；KPI 卡 flex:1 平均分配該高度。
+   高度 424px ≈ 原本內容高度（約 352px）的 1.2 倍。 */
+.yd-grid { display: grid; grid-template-columns: 208px minmax(0,1fr); gap: 16px; margin-bottom: 24px; align-items: stretch; min-height: 424px; }
+@media (max-width: 860px) { .yd-grid { grid-template-columns: 1fr; min-height: 0; } }
 .yd-metrics { display: flex; flex-direction: column; gap: 8px; }
+.yd-metrics .metric { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+@media (max-width: 860px) { .yd-metrics .metric { flex: none; } }
 
 /* 近30天整體表現：左 KPI ｜ 中 每日開播人數 ｜ 右 等級分布 */
 .mo-grid { display: grid; grid-template-columns: 208px minmax(0,1fr) minmax(0,1fr); gap: 16px; margin-bottom: 24px; align-items: start; }
