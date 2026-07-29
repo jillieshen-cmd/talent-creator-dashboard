@@ -109,7 +109,7 @@ select:focus { border-color: var(--primary); }
 /* 近30天整體表現：左 KPI ｜ 中 每日開播人數 ｜ 右 等級分布
    三欄等高：480px（5 張含副標的 KPI 卡最少需要約 467px），兩張圖用 flex 填滿整張卡，
    高度自然對齊 KPI 欄，不再各自寫死 px。 */
-.mo-grid { display: grid; grid-template-columns: 208px minmax(0,1fr) minmax(0,1fr); gap: 16px; margin-bottom: 24px; align-items: stretch; min-height: 480px; }
+.mo-grid { display: grid; grid-template-columns: 208px minmax(0,2.9fr) minmax(0,1fr); gap: 16px; margin-bottom: 24px; align-items: stretch; min-height: 480px; }
 @media (max-width: 1120px) { .mo-grid { grid-template-columns: 208px minmax(0,1fr); min-height: 0; } }
 @media (max-width: 860px) { .mo-grid { grid-template-columns: 1fr; min-height: 0; } }
 .mo-grid .yd-metrics .metric { flex: 1; display: flex; flex-direction: column; justify-content: center; }
@@ -400,7 +400,7 @@ function renderLvChart(lvCounts) {
     options: {
       indexAxis: 'y',
       responsive: true, maintainAspectRatio: false,
-      layout: { padding: { right: 34 } },
+      layout: { padding: { right: 30 } },   /* 右側留白給長條末端的場次數（欄位變窄後縮小） */
       plugins: {
         legend: { display: false },
         tooltip: { callbacks: { label: c => ` ${c.raw} 場（${(c.raw / vals.reduce((a,b)=>a+b,0) * 100).toFixed(1)}%）` } }
