@@ -184,7 +184,7 @@ select:focus { border-color: var(--primary); }
   <!-- ═══════════ 分頁 2：近30天整體表現 ═══════════ -->
   <div class="tab-panel" id="panel-monthly">
 
-    <div class="section-title">近30天整體表現</div>
+    <div class="section-title" id="monthly-title">近30天整體表現</div>
     <div class="mo-grid">
       <div id="monthly-metrics" class="yd-metrics">
         <div class="loading"><div class="spinner"></div>載入…</div>
@@ -276,6 +276,11 @@ function dowOf(ymd) {
   return new Date(p.y, p.m-1, p.d).getDay();   // 0=日 6=六
 }
 /* 業務日視窗字串，與 Slack 通知同格式：7/28 05:00–7/29 05:00 */
+/* M/D（不帶年）。近30天標題用，跟 bizWindowLabel 的日期寫法一致 */
+function mdLabel(ymd) {
+  const p = ymdToParts(ymd);
+  return `${p.m}/${p.d}`;
+}
 function bizWindowLabel(ymd) {
   const p = ymdToParts(ymd);
   const start = new Date(p.y, p.m-1, p.d);
@@ -366,6 +371,15 @@ function renderYesterday() {
 function renderMonthly() {
   const m = data.monthly_summary;
   if (!m) return;
+
+  /* 標題補上日期區間。取 daily_series 的頭尾＝「實際有資料」的範圍，
+     不要用 m.month（那是「當月 YYYYMM」，跟近30天區間對不上）；
+     也不要用後端的查詢區間上限（含今天，但今天的業務日資料要隔天早上才產生）。 */
+  const ds = m.daily_series || [];
+  if (ds.length) {
+    document.getElementById('monthly-title').textContent =
+      `近30天整體表現（${mdLabel(ds[0].date)}–${mdLabel(ds[ds.length-1].date)}）`;
+  }
 
   /* ⚠️ lv_counts 是「場次」口徑（每場一票），所以這裡加總出來的是場次數不是人數 */
   const lvTotal  = Object.values(m.lv_counts).reduce((a,b)=>a+b, 0);
