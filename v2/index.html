@@ -372,9 +372,9 @@ function renderMonthly() {
   const m = data.monthly_summary;
   if (!m) return;
 
-  /* 標題補上日期區間。取 daily_series 的頭尾＝「實際有資料」的範圍，
-     不要用 m.month（那是「當月 YYYYMM」，跟近30天區間對不上）；
-     也不要用後端的查詢區間上限（含今天，但今天的業務日資料要隔天早上才產生）。 */
+  /* 標題補上日期區間。刻意取 daily_series 的頭尾＝「實際有資料」的範圍，
+     而不是後端的 m.range_from / m.range_to（那是查詢區間、含今天，
+     但今天的業務日資料要隔天早上才產生，用它會出現「標題寫到 8/2、圖只到 8/1」的矛盾）。 */
   const ds = m.daily_series || [];
   if (ds.length) {
     document.getElementById('monthly-title').textContent =
