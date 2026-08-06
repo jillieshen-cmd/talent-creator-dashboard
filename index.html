@@ -141,6 +141,7 @@ select:focus { border-color: var(--primary); }
 .cmp-legend { display: flex; gap: 14px; font-size: 11px; color: var(--text-tertiary); margin-bottom: 10px; flex-wrap: wrap; }
 .cmp-key { display: inline-flex; align-items: center; gap: 5px; }
 .cmp-swatch { width: 10px; height: 10px; border-radius: 2px; }
+.cmp-avgline { font-size: 10.5px; color: var(--text-tertiary); margin-top: 2px; }
 
 .loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--text-tertiary); font-family: var(--mono); font-size: 12px; gap: 10px; }
 .spinner { width: 16px; height: 16px; border: 2px solid var(--border2); border-top-color: var(--primary); border-radius: 1000px; animation: spin 0.8s linear infinite; }
@@ -531,7 +532,7 @@ const CMP_FIELDS = [
   { key:'kpi_1',      name:'CCU',      fmt:v => v.toFixed(1) },
   { key:'kpi_2',      name:'聊天',     fmt:v => v.toFixed(1) },
   { key:'kpi_3',      name:'新用戶',   fmt:v => v.toFixed(1) },
-  { key:'kpi_4',      name:'人均分鐘', fmt:v => v.toFixed(2) },
+  { key:'kpi_4',      name:'人均分鐘', fmt:v => v.toFixed(1) },
   { key:'kpi_5',      name:'獲鑽',     fmt:v => Math.round(v).toLocaleString() },
   { key:'kpi_6_hour', name:'開播時數', fmt:v => v.toFixed(2)+'h' }
 ];
@@ -552,10 +553,11 @@ function renderCompare(daily) {
         <div class="cmp-name">${f.name}</div>
         <div class="cmp-bars">
           <div class="cmp-bar"><div class="cmp-bar-fill" style="width:${(mine/max*100).toFixed(1)}%;background:var(--primary)"></div></div>
-          <div class="cmp-bar"><div class="cmp-bar-fill" style="width:${(avg/max*100).toFixed(1)}%;background:var(--tertiary)"></div></div>
+          <div class="cmp-bar"><div class="cmp-bar-fill" style="width:${(avg/max*100).toFixed(1)}%;background:var(--text-tertiary)"></div></div>
         </div>
         <div class="cmp-nums">${f.fmt(mine)}
           <span class="cmp-diff ${diff>=0?'cmp-up':'cmp-down'}">${diff>=0?'▲':'▼'}${Math.abs(diff).toFixed(0)}%</span>
+          <div class="cmp-avgline">全體 ${f.fmt(avg)}</div>
         </div>
       </div>`;
   }).join('');
@@ -565,7 +567,7 @@ function renderCompare(daily) {
       <div class="card-title">與全體平均的對比</div>
       <div class="cmp-legend">
         <span class="cmp-key"><span class="cmp-swatch" style="background:var(--primary)"></span>這位主播</span>
-        <span class="cmp-key"><span class="cmp-swatch" style="background:var(--tertiary)"></span>全體平均（當月 ${all.sessions} 場）</span>
+        <span class="cmp-key"><span class="cmp-swatch" style="background:var(--text-tertiary)"></span>全體平均（當月 ${all.sessions} 場）</span>
       </div>
       <div class="cmp-grid">${rows}</div>
       <div class="footnote">百分比＝這位主播的區間平均 ÷ 全體平均。全體平均口徑為當月所有有開播場次。</div>
