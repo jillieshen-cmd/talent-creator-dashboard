@@ -241,7 +241,7 @@ select.select-narrow { max-width: 150px; }
         <input type="date" id="userFrom" class="date-input" onchange="renderUserDetail()">
         <span style="color:var(--text-tertiary);font-family:var(--mono);font-size:12px">—</span>
         <input type="date" id="userTo" class="date-input" onchange="renderUserDetail()">
-        <button class="btn" onclick="clearUserDateFilter()">✕ 清除</button>
+        <button class="btn" onclick="resetUserQuery()">✕ 清除</button>
       </div>
       <div id="user-detail"><div class="no-data">請選擇主播查看各項指標</div></div>
     </div>
@@ -581,6 +581,12 @@ function onCompanyFilterChange() {
   document.getElementById('user-detail').innerHTML = '<div class="no-data">請選擇主播查看各項指標</div>';
 }
 
+/* 清除鈕：整組篩選回到原始預設狀態（全部公司／未選主播／近30天），不是只清日期 */
+function resetUserQuery() {
+  document.getElementById('companyFilter').value = '';
+  onCompanyFilterChange();
+}
+
 const CMP_FIELDS = [
   { key:'score_ttl',  name:'分數',     fmt:v => v.toFixed(1) },
   { key:'kpi_1',      name:'CCU',      fmt:v => v.toFixed(1) },
@@ -840,13 +846,6 @@ async function renderUserDetail() {
   }
 }
 
-function clearUserDateFilter() {
-  const to = new Date(), from = new Date();
-  from.setDate(to.getDate() - 29);
-  document.getElementById('userFrom').value = fmtInputDate(from);
-  document.getElementById('userTo').value   = fmtInputDate(to);
-  renderUserDetail();
-}
 
 loadData();
 </script>
