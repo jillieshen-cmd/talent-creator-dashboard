@@ -90,6 +90,8 @@ tr.top1 td { background: rgba(0,210,190,0.06); }
 
 select { background: var(--container); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 8px 30px 8px 12px; outline: none; cursor: pointer; width: 100%; max-width: 320px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23646464' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
 select:focus { border-color: var(--primary); }
+/* 所屬公司篩選欄位值較短，寬度縮成一般 select 的一半，讓整列篩選器維持一行 */
+select.select-narrow { max-width: 150px; }
 .date-input { background: var(--container); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 8px 12px; outline: none; cursor: pointer; }
 .date-input:focus { border-color: var(--primary); }
 .select-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -117,14 +119,31 @@ select:focus { border-color: var(--primary); }
 .mo-grid > .card .chart-wrap { flex: 1; height: auto; min-height: 160px; }
 @media (max-width: 1120px) { .mo-grid > .card .chart-wrap { min-height: 300px; } }
 
-/* 個人查詢頁：三欄 — 主播資訊＋KPI ｜ 分數趨勢 ｜ 與全體平均對比 */
-.user-grid { display: grid; grid-template-columns: 236px minmax(0,1fr) minmax(0,1fr); gap: 16px; margin-bottom: 16px; align-items: start; }
-@media (max-width: 1120px) { .user-grid { grid-template-columns: 236px minmax(0,1fr); } }
-@media (max-width: 860px) { .user-grid { grid-template-columns: 1fr; } }
-.user-left { display: flex; flex-direction: column; gap: 8px; }
-.user-card { background: var(--container); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
-.user-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.user-metrics .metric:first-child { grid-column: 1 / -1; }
+/* 個人查詢頁：左欄上下堆疊（① KPI 數據列 ／ ② 分數趨勢圖），右欄「與全體平均對比」橫跨兩列
+   四張卡吃同一組 grid-template-columns/rows + gap，邊界自然對齊，不用手動喬高度（2026-08-09 版面調整） */
+.user-grid { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,1fr); grid-template-rows: auto auto; gap: 16px; margin-bottom: 16px; }
+@media (max-width: 1000px) { .user-grid { grid-template-columns: 1fr; } }
+.user-kpi-card      { grid-column: 1; grid-row: 1; min-width: 0; }
+.user-trend-card    { grid-column: 1; grid-row: 2; }
+.user-compare-card  { grid-column: 2; grid-row: 1 / span 2; }
+@media (max-width: 1000px) { .user-kpi-card, .user-trend-card, .user-compare-card { grid-column: 1; grid-row: auto; } }
+
+/* KPI 卡拆兩列：第一列主播名稱＋連結（不跟 KPI 搶寬度，長藝名/大數字不會擠壓版面），第二列 5 個 KPI 平分卡片全寬 */
+.user-kpi-row1 { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--border); min-width: 0; }
+.user-profile-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.user-name { font-weight: 600; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-company { font-size: 11px; color: var(--text-tertiary); font-family: var(--mono); }
+.profile-link { font-size: 12px; color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap; }
+.profile-link:hover { text-decoration: underline; }
+.user-kpi-card .avatar { width: 52px; height: 52px; font-size: 17px; }
+.user-kpi-tiles { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; min-width: 0; }
+.user-kpi-tiles .metric { padding: 18px 12px; display: flex; flex-direction: column; justify-content: flex-start; min-width: 0; }
+.user-trend-card .chart-wrap { height: 170px; }
+@media (max-width: 760px) {
+  .user-kpi-row1 { flex-wrap: wrap; }
+  .profile-link { margin-left: 64px; }
+  .user-kpi-tiles { grid-template-columns: repeat(2, 1fr); }
+}
 
 /* 與全體平均對比：七條橫列單欄（放在趨勢圖右側，寬度天然變短） */
 .cmp-grid { display: grid; grid-template-columns: 1fr; }
@@ -211,7 +230,7 @@ select:focus { border-color: var(--primary); }
     <div class="card" style="margin-bottom:24px">
       <div class="select-row">
         <span class="select-label">所屬公司</span>
-        <select id="companyFilter" onchange="onCompanyFilterChange()">
+        <select id="companyFilter" class="select-narrow" onchange="onCompanyFilterChange()">
           <option value="">全部公司</option>
         </select>
         <span class="select-label" style="margin-left:8px">選擇主播</span>
@@ -598,7 +617,7 @@ function renderCompare(daily) {
   }).join('');
 
   return `
-    <div class="card">
+    <div class="card user-compare-card">
       <div class="card-title">與全體平均的對比</div>
       <div class="cmp-legend">
         <span class="cmp-key"><span class="cmp-swatch" style="background:var(--primary)"></span>這位主播</span>
@@ -781,15 +800,16 @@ async function renderUserDetail() {
       <div style="font-size:11px;color:var(--text-tertiary);font-family:var(--mono);margin-bottom:12px">📅 查詢區間：${rangeLabel}</div>
 
       <div class="user-grid">
-        <div class="user-left">
-          <div class="user-card">
+        <div class="card user-kpi-card">
+          <div class="user-kpi-row1">
             <div class="avatar">${u.name.slice(0,2)}</div>
-            <div style="min-width:0">
-              <div style="font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis">${u.name}</div>
-              <div style="font-size:11px;color:var(--text-tertiary);font-family:var(--mono);margin-top:3px">${u.company || '（無所屬公司）'}</div>
+            <div class="user-profile-info">
+              <div class="user-name">${u.name}</div>
+              <div class="user-company">${u.company || '（無所屬公司）'}</div>
             </div>
+            <a class="profile-link" href="https://swag.live/user/${uid}" target="_blank" rel="noopener">🔗 前往主站頁面</a>
           </div>
-          <div class="user-metrics">
+          <div class="user-kpi-tiles">
             <div class="metric"><div class="metric-label">最佳等級</div><div class="metric-value" style="color:${lvColor(u.best_lv)}">${u.best_lv}</div><div class="metric-sub">最高分 ${u.best_score}</div></div>
             <div class="metric"><div class="metric-label">開播天數</div><div class="metric-value" style="color:var(--info)">${u.active_days}</div></div>
             <div class="metric"><div class="metric-label">平均分數</div><div class="metric-value" style="color:var(--primary)">${u.avg_score}</div></div>
@@ -798,9 +818,9 @@ async function renderUserDetail() {
           </div>
         </div>
 
-        <div class="card">
+        <div class="card user-trend-card">
           <div class="card-title">${trendTitle}</div>
-          <div class="chart-wrap" style="height:286px"><canvas id="userScoreChart" role="img" aria-label="該主播分數趨勢折線圖"></canvas></div>
+          <div class="chart-wrap"><canvas id="userScoreChart" role="img" aria-label="該主播分數趨勢折線圖"></canvas></div>
           <div class="footnote">橫軸只包含有開播的日子；灰底代表該場為週末（六、日）</div>
         </div>
 
