@@ -210,7 +210,11 @@ select:focus { border-color: var(--primary); }
     <div class="section-title">主播個人查詢</div>
     <div class="card" style="margin-bottom:24px">
       <div class="select-row">
-        <span class="select-label">選擇主播</span>
+        <span class="select-label">所屬公司</span>
+        <select id="companyFilter" onchange="onCompanyFilterChange()">
+          <option value="">全部公司</option>
+        </select>
+        <span class="select-label" style="margin-left:8px">選擇主播</span>
         <select id="userSelect" onchange="renderUserDetail()">
           <option value="">— 請選擇 —</option>
         </select>
@@ -302,6 +306,7 @@ async function loadData() {
     data = await res.json();
     if (!data.ok) throw new Error('Webhook 回傳錯誤');
     renderYesterday();
+    buildCompanyFilter();
     buildUserSelect();
     /* 近30天分頁若正在顯示（例如按了重新整理），就直接重畫 */
     if (document.getElementById('panel-monthly').classList.contains('active')) renderMonthly();
@@ -512,10 +517,34 @@ function renderDailyChart(series) {
 }
 
 /* ══════════ 主播個人查詢 ══════════ */
+const NO_COMPANY = '__none__';   // 區分「未篩選（全部）」與「篩選出無所屬公司的人」
+
+/* 從 data.user_list 算出不重複的所屬公司，塞進篩選器；重刷資料時保留原本選取值 */
+function buildCompanyFilter() {
+  const sel = document.getElementById('companyFilter');
+  const prev = sel.value;
+  const companies = [...new Set((data.user_list || []).map(u => u.company || ''))];
+  const hasNoCompany = companies.includes('');
+  const named = companies.filter(c => c).sort((a, b) => a.localeCompare(b));
+
+  sel.innerHTML = '<option value="">全部公司</option>'
+    + named.map(c => `<option value="${c}">${c}</option>`).join('')
+    + (hasNoCompany ? `<option value="${NO_COMPANY}">（無所屬公司）</option>` : '');
+
+  sel.value = [...sel.options].some(o => o.value === prev) ? prev : '';
+}
+
 function buildUserSelect() {
   const sel = document.getElementById('userSelect');
+  const company = document.getElementById('companyFilter').value;
+  const list = (data.user_list || []).filter(u => {
+    if (!company) return true;
+    if (company === NO_COMPANY) return !u.company;
+    return u.company === company;
+  });
+
   sel.innerHTML = '<option value="">— 請選擇 —</option>';
-  (data.user_list || []).forEach(u => {
+  list.forEach(u => {
     const opt = document.createElement('option');
     opt.value = u.uid;
     opt.textContent = `${u.name}${u.company ? ' ['+u.company+']' : ''}`;
@@ -525,6 +554,12 @@ function buildUserSelect() {
   from.setDate(to.getDate() - 29);
   document.getElementById('userFrom').value = fmtInputDate(from);
   document.getElementById('userTo').value   = fmtInputDate(to);
+}
+
+/* 切換所屬公司篩選：重建主播清單並清空查詢卡片，不保留原本選取的主播 */
+function onCompanyFilterChange() {
+  buildUserSelect();
+  document.getElementById('user-detail').innerHTML = '<div class="no-data">請選擇主播查看各項指標</div>';
 }
 
 const CMP_FIELDS = [
